@@ -107,7 +107,7 @@ module.exports = {
         const source = sources.shift();
         if (this.isObjectNotArray(target) && this.isObjectNotArray(source)) {
             for (const key in source) {
-                if (this.isObjectNotArray(source[key])) {
+                if (this.isObjectNotArray(source[key]) && !(source[key] instanceof RegExp)) {
                     if (!target[key]) Object.assign(target, { [key]: {} });
                     this.mergeDeep(target[key], source[key]);
                 } else {

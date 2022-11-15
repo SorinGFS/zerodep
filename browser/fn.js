@@ -66,12 +66,13 @@ module.exports = {
             }, object);
     },
     // https://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically
+    // returns merged objects, array keys are not merged instead the last array wins
     mergeDeep: function (target, ...sources) {
         if (!sources.length) return target;
         const source = sources.shift();
         if (this.isObjectNotArray(target) && this.isObjectNotArray(source)) {
             for (const key in source) {
-                if (this.isObjectNotArray(source[key])) {
+                if (this.isObjectNotArray(source[key]) && !(source[key] instanceof RegExp)) {
                     if (!target[key]) Object.assign(target, { [key]: {} });
                     this.mergeDeep(target[key], source[key]);
                 } else {
