@@ -53,7 +53,7 @@ module.exports = {
     // to avoid single refs arg to be splitted by dot wrap it in brackets: ['foo.bar']
     get: (object, ...refs) => {
         const defaultValue = undefined;
-        const delim = refs.length !== 1 ? ',' : Array.isArray(refs[0] ? ',': '.');
+        const delim = refs.length !== 1 ? ',' : Array.isArray(refs[0]) ? ',': '.';
         return String(refs)
             .split(delim)
             .reduce((data, key) => {
