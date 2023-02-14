@@ -49,21 +49,16 @@ module.exports = {
     isObjectNotArray: function (item) {
         return item && typeof item === 'object' && !Array.isArray(item);
     },
-    // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
-    // to avoid single refs arg to be splitted by dot wrap it in brackets: ['foo.bar']
+   // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
+    // split the object reference by corresponding delimiter and pass the keys array using spread operator
     get: (object, ...refs) => {
-        const defaultValue = undefined;
-        const delim = refs.length !== 1 ? ',' : Array.isArray(refs[0]) ? ',': '.';
-        return String(refs)
-            .split(delim)
-            .reduce((data, key) => {
-                try {
-                    data = data[key] !== undefined && data[key] !== null ? data[key] : defaultValue;
-                } catch (e) {
-                    return defaultValue;
-                }
-                return data;
-            }, object);
+        return refs.reduce((node, ref) => {
+            try {
+                return node[ref];
+            } catch (e) {
+                return undefined;
+            }
+        }, object);
     },
     // https://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically
     // returns merged objects, array keys are not merged instead the last array wins

@@ -84,21 +84,16 @@ module.exports = {
         if (!Array.isArray(target)) return {};
         return Promise.resolve(target.reduce((acc, value) => this.mergeDeep(acc, parse(value)), {}));
     },
-    // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
-    // to avoid single refs arg to be splitted by dot wrap it in brackets: ['foo.bar']
+   // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
+    // split the object reference by corresponding delimiter and pass the keys array using spread operator
     get: (object, ...refs) => {
-        const defaultValue = undefined;
-        const delim = refs.length !== 1 ? ',' : Array.isArray(refs[0]) ? ',': '.';
-        return String(refs)
-            .split(delim)
-            .reduce((data, key) => {
-                try {
-                    data = data[key] !== undefined && data[key] !== null ? data[key] : defaultValue;
-                } catch (e) {
-                    return defaultValue;
-                }
-                return data;
-            }, object);
+        return refs.reduce((node, ref) => {
+            try {
+                return node[ref];
+            } catch (e) {
+                return undefined;
+            }
+        }, object);
     },
     // https://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically
     // returns merged objects, array keys are not merged instead the last array wins
@@ -117,52 +112,107 @@ module.exports = {
         }
         return this.mergeDeep(target, ...sources);
     },
-    // sources shoud return array of objects, null or undefined
+    // sources shoud return object or array of objects, null or undefined
     replaceDeep: function (target, keyToReplace, sources) {
         Object.keys(target).forEach((key) => {
-            // passes if sources returns empty array, should return undefined or null to avoid key removal
-            if (key === keyToReplace && sources(target[key])) {
-                Object.assign(target, ...sources(target[key]));
-                delete target[key];
-                // key found, replaced, the result may also include a keyToReplace so start over
-                return this.replaceDeep(target, keyToReplace, sources);
+            // passes if sources returns empty object, should return undefined or null to avoid key removal
+            if (key === keyToReplace) {
+                let assignments = sources(target[key]);
+                if (assignments) {
+                    if (!Array.isArray(assignments)) assignments = [assignments];
+                    Object.assign(target, ...assignments);
+                    delete target[key];
+                    // key found, replaced, the result may also include a keyToReplace so start over
+                    return this.replaceDeep(target, keyToReplace, sources);
+                }
             } else if (target[key] && typeof target[key] === 'object') {
                 this.replaceDeep(target[key], keyToReplace, sources);
             }
         });
     },
-    // sources shoud return array of objects, null or undefined
-    parseDeep: function (target, sources) {
+    // sources shoud return object or array of objects, null or undefined
+    assignDeep: function (target, sources) {
         Object.keys(target).forEach((key) => {
-            // if sources returns empty array the target.key will remain intact
-            Object.assign(target, ...sources(key, target[key]));
+            // if sources returns empty object the target.key will remain intact
+            let assignments = sources(key, target[key]);
+            if (assignments) {
+                if (!Array.isArray(assignments)) assignments = [assignments];
+                Object.assign(target, ...assignments);
+            }
             if (target[key] && typeof target[key] === 'object') {
-                this.parseDeep(target[key], sources);
+                this.assignDeep(target[key], sources);
             }
         });
     },
-    // sources shoud return array of objects, null or undefined
-    parseDeepKey: function (target, keyToParse, sources) {
+    // sources shoud return object or array of objects, null or undefined
+    assignDeepKey: function (target, keyToParse, sources) {
         Object.keys(target).forEach((key) => {
-            // if sources returns empty array the target.key will remain intact
+            // if sources returns empty object the target.key will remain intact
             if (key === keyToParse) {
-                Object.assign(target, ...sources(target[key]));
+                let assignments = sources(target[key]);
+                if (assignments) {
+                    if (!Array.isArray(assignments)) assignments = [assignments];
+                    Object.assign(target, ...assignments);
+                }
             } else if (target[key] && typeof target[key] === 'object') {
-                this.parseDeepKey(target[key], keyToParse, sources);
+                this.assignDeepKey(target[key], keyToParse, sources);
             }
         });
     },
-    // sources shoud return array of objects, null or undefined
-    parseDeepKeyParent: function (target, keyToParse, sources, parent, parentKey) {
+    // sources shoud return object or array of objects, null or undefined
+    assignDeepKeyParent: function (target, keyToParse, sources, parent, parentKey) {
         if (!parent) parent = target;
         Object.keys(target).forEach((key) => {
-            // if sources returns empty array the target.key will remain intact
+            // if sources returns empty object the target.key will remain intact
             if (key === keyToParse) {
-                Object.assign(parent, ...sources(parent, parentKey));
+                let assignments = sources(parent, parentKey);
+                if (assignments) {
+                    if (!Array.isArray(assignments)) assignments = [assignments];
+                    Object.assign(parent, ...assignments);
+                }
             } else if (target[key] && typeof target[key] === 'object') {
-                this.parseDeepKeyParent(target[key], keyToParse, sources, target, key);
+                this.assignDeepKeyParent(target[key], keyToParse, sources, target, key);
             }
         });
+    },
+    // deep parse a given object by a given parser
+    parseDeep: (parser, object, ...refs) => {
+        const parse = (...refs) => {
+            const node = fn.get(object, ...refs);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    parser(object, ...refs, key) && parse(...refs);
+                    if (node[key] && typeof node[key] === 'object') parse(...refs, key);
+                });
+            }
+        };
+        parse(...refs);
+    },
+    // deep parse a given object key by a given parser
+    parseDeepKey: (keyToParse, parser, object, ...refs) => {
+        const parse = (...refs) => {
+            const node = fn.get(object, ...refs);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if (key === keyToParse) parser(object, ...refs, key) && parse(...refs);
+                    if (node[key] && typeof node[key] === 'object') parse(...refs, key);
+                });
+            }
+        };
+        parse(...refs);
+    },
+    // deep parse a given object key's parent by a given parser
+    parseDeepKeyParent: (keyToParse, parser, object, ...refs) => {
+        const parse = (...refs) => {
+            const node = fn.get(object, ...refs);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if (key === keyToParse) parser(object, ...refs) && parse(...refs);
+                    if (node[key] && typeof node[key] === 'object') parse(...refs, key);
+                });
+            }
+        };
+        parse(...refs);
     },
     // parses only schemas matching to data
     parseDeepSchema: function (data, schema, parse) {
