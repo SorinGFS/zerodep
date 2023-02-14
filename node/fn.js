@@ -176,9 +176,9 @@ module.exports = {
         });
     },
     // deep parse a given object by a given parser
-    parseDeep: (parser, object, ...refs) => {
+    parseDeep: function (parser, object, ...refs) {
         const parse = (...refs) => {
-            const node = fn.get(object, ...refs);
+            const node = this.get(object, ...refs);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     parser(object, ...refs, key) && parse(...refs);
@@ -189,9 +189,9 @@ module.exports = {
         parse(...refs);
     },
     // deep parse a given object key by a given parser
-    parseDeepKey: (keyToParse, parser, object, ...refs) => {
+    parseDeepKey: function (keyToParse, parser, object, ...refs) {
         const parse = (...refs) => {
-            const node = fn.get(object, ...refs);
+            const node = this.get(object, ...refs);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (key === keyToParse) parser(object, ...refs, key) && parse(...refs);
@@ -202,9 +202,9 @@ module.exports = {
         parse(...refs);
     },
     // deep parse a given object key's parent by a given parser
-    parseDeepKeyParent: (keyToParse, parser, object, ...refs) => {
+    parseDeepKeyParent: function (keyToParse, parser, object, ...refs) {
         const parse = (...refs) => {
-            const node = fn.get(object, ...refs);
+            const node = this.get(object, ...refs);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (key === keyToParse) parser(object, ...refs) && parse(...refs);
