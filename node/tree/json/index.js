@@ -1,6 +1,7 @@
 'use strict';
 // load json files in tree
-import load from '../load';
+const load = require('../load');
+const fs = require('../../fs');
 
 const loader = (...pathResolveArgs) => {
     const file = String(pathResolveArgs.slice(-1));
@@ -9,4 +10,4 @@ const loader = (...pathResolveArgs) => {
     }
 };
 
-export default (...pathResolveArgs) => load(loader, ...pathResolveArgs);
+module.exports = (...pathResolveArgs) => load(loader, ...pathResolveArgs);
