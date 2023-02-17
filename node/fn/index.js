@@ -151,7 +151,7 @@ module.exports = {
             if (key === keyToParse) {
                 let assignments = sources(target[key]);
                 if (assignments) {
-                    if (!Array.isArray(assignments)) assignments = [assignments];
+                    if (!Array.isArray(target) && !Array.isArray(assignments)) assignments = [assignments];
                     Object.assign(target, ...assignments);
                 }
             } else if (target[key] && typeof target[key] === 'object') {
@@ -165,9 +165,10 @@ module.exports = {
         Object.keys(target).forEach((key) => {
             // if sources returns empty object the target.key will remain intact
             if (key === keyToParse) {
+                // in sources use const target = parentKey ? parent[parentKey] : parent;
                 let assignments = sources(parent, parentKey);
                 if (assignments) {
-                    if (!Array.isArray(assignments)) assignments = [assignments];
+                    if (!Array.isArray(parent) && !Array.isArray(assignments)) assignments = [assignments];
                     Object.assign(parent, ...assignments);
                 }
             } else if (target[key] && typeof target[key] === 'object') {
