@@ -84,16 +84,80 @@ module.exports = {
         if (!Array.isArray(target)) return {};
         return Promise.resolve(target.reduce((acc, value) => this.mergeDeep(acc, parse(value)), {}));
     },
-   // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
+    // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
-    get: (object, ...refs) => {
-        return refs.reduce((node, ref) => {
+    get: (object, ...keys) => {
+        return keys.reduce((node, key) => {
             try {
-                return node[ref];
+                return node[key];
             } catch (e) {
                 return undefined;
             }
         }, object);
+    },
+    // get: function (object, ...keys) {
+    //     if (typeof object === 'undefined') return false;
+    //     if (keys.length === 0) return object;
+    //     if (keys.length === 1) return object[keys[0]];
+    //     return this.get(object[keys.shift()], ...keys);
+    // },
+    // set: function (value, object, ...keys) {
+    //     if (typeof object === 'undefined') return false;
+    //     if (keys.length === 0) return object = value;
+    //     if (keys.length === 1) return object[keys[0]] = value;
+    //     return this.set(value, object[keys.shift()], ...keys);
+    // },
+    set: (value, object, ...keys) => {
+        if (!keys.length) return (object = value);
+        const key = keys.pop();
+        const target = keys.reduce((node, key) => {
+            try {
+                return node[key];
+            } catch (e) {
+                return undefined;
+            }
+        }, object);
+        if (target) return (target[key] = value);
+    },
+    clone: (object, ...keys) => {
+        // this is dead slow for larger objects
+        const cloneDeep = (object) => {
+            if (typeof object !== 'object') return object;
+            else if (Array.isArray(object)) return object.map(cloneDeep);
+            return Object.fromEntries(Object.entries(object).map(([key, value]) => [key, cloneDeep(value)]));
+        };
+        if (!keys.length) return cloneDeep(object);
+        const key = keys.pop();
+        const target = keys.reduce((node, key) => {
+            try {
+                return node[key];
+            } catch (e) {
+                return undefined;
+            }
+        }, object);
+        if (target) return cloneDeep(target[key]);
+    },
+    structuredClone: (object, ...keys) => {
+        // this is dead slow for larger objects
+        const cloneDeep = (object) => {
+            if (typeof object !== 'object') return object;
+            else if (Array.isArray(object)) return object.map(cloneDeep);
+            return Object.fromEntries(
+                Object.entries(object)
+                    .sort()
+                    .map(([key, value]) => [key, cloneDeep(value)])
+            );
+        };
+        if (!keys.length) return cloneDeep(object);
+        const key = keys.pop();
+        const target = keys.reduce((node, key) => {
+            try {
+                return node[key];
+            } catch (e) {
+                return undefined;
+            }
+        }, object);
+        if (target) return cloneDeep(target[key]);
     },
     // https://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically
     // returns merged objects, array keys are not merged instead the last array wins
@@ -177,43 +241,43 @@ module.exports = {
         });
     },
     // deep parse a given object by a given parser
-    parseDeep: function (parser, object, ...refs) {
-        const parse = (...refs) => {
-            const node = this.get(object, ...refs);
+    parseDeep: function (parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = this.get(object, ...keys);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    parser(object, ...refs, key) && parse(...refs);
-                    if (node[key] && typeof node[key] === 'object') parse(...refs, key);
+                    parser(object, ...keys, key) && parse(...keys);
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
         };
-        parse(...refs);
+        parse(...keys);
     },
     // deep parse a given object key by a given parser
-    parseDeepKey: function (keyToParse, parser, object, ...refs) {
-        const parse = (...refs) => {
-            const node = this.get(object, ...refs);
+    parseDeepKey: function (keyToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = this.get(object, ...keys);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (key === keyToParse) parser(object, ...refs, key) && parse(...refs);
-                    if (node[key] && typeof node[key] === 'object') parse(...refs, key);
+                    if (key === keyToParse) parser(object, ...keys, key) && parse(...keys);
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
         };
-        parse(...refs);
+        parse(...keys);
     },
     // deep parse a given object key's parent by a given parser
-    parseDeepKeyParent: function (keyToParse, parser, object, ...refs) {
-        const parse = (...refs) => {
-            const node = this.get(object, ...refs);
+    parseDeepKeyParent: function (keyToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = this.get(object, ...keys);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (key === keyToParse) parser(object, ...refs) && parse(...refs);
-                    if (node[key] && typeof node[key] === 'object') parse(...refs, key);
+                    if (key === keyToParse) parser(object, ...keys) && parse(...keys);
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
         };
-        parse(...refs);
+        parse(...keys);
     },
     // parses only schemas matching to data
     parseDeepSchema: function (data, schema, parse) {
