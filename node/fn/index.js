@@ -159,6 +159,19 @@ module.exports = {
         }, object);
         if (target) return cloneDeep(target[key]);
     },
+    deepKeys: function (object) {
+        let array = [];
+        Object.keys(object).forEach((key) => {
+            this.parseDeep((object, ...keys) => {
+                array.push(...keys);
+            }, object[key]);
+        });
+        array = this.uniqueArray(String(array).split(',')).sort();
+        array.forEach((value, index) => {
+            if (this.isNumeric(value)) delete array[index];
+        });
+        return array.filter((n) => n);
+    },
     // https://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically
     // returns merged objects, array keys are not merged instead the last array wins
     mergeDeep: function (target, ...sources) {
