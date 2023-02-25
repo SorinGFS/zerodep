@@ -259,7 +259,7 @@ module.exports = {
             const node = this.get(object, ...keys);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    parser(object, ...keys, key) && parse(...keys);
+                    parser(...keys, key) && parse(...keys);
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
@@ -272,7 +272,7 @@ module.exports = {
             const node = this.get(object, ...keys);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (key === keyToParse) parser(object, ...keys, key) && parse(...keys);
+                    if (key === keyToParse) parser( ...keys, key) && parse(...keys);
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
@@ -285,7 +285,7 @@ module.exports = {
             const node = this.get(object, ...keys);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (key === keyToParse) parser(object, ...keys) && parse(...keys);
+                    if (key === keyToParse) parser(...keys) && parse(...keys);
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
