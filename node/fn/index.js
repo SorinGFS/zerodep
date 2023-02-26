@@ -162,7 +162,7 @@ module.exports = {
     deepKeys: function (object) {
         let array = [];
         Object.keys(object).forEach((key) => {
-            this.parseDeep((object, ...keys) => {
+            this.parseDeep((...keys) => {
                 array.push(...keys);
             }, object[key]);
         });
@@ -272,7 +272,7 @@ module.exports = {
             const node = this.get(object, ...keys);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (key === keyToParse) parser( ...keys, key) && parse(...keys);
+                    if (key === keyToParse) parser(...keys, key) && parse(...keys);
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
