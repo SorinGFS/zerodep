@@ -207,51 +207,61 @@ module.exports = {
             }
         });
     },
-    // sources shoud return object or array of objects, null or undefined
-    assignDeep: function (target, sources) {
-        Object.keys(target).forEach((key) => {
-            // if sources returns empty object the target.key will remain intact
-            let assignments = sources(key, target[key]);
-            if (assignments) {
-                if (!Array.isArray(assignments)) assignments = [assignments];
-                Object.assign(target, ...assignments);
+    // parser shoud return object or array of objects, null, undefined or nothing
+    assignDeep: function (parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = this.get(object, ...keys);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    let assignments = parser({ [key]: node[key] });
+                    if (assignments) {
+                        if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
+                        Object.assign(node, ...assignments);
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
             }
-            if (target[key] && typeof target[key] === 'object') {
-                this.assignDeep(target[key], sources);
-            }
-        });
+        };
+        parse(...keys);
     },
-    // sources shoud return object or array of objects, null or undefined
-    assignDeepKey: function (target, keyToParse, sources) {
-        Object.keys(target).forEach((key) => {
-            // if sources returns empty object the target.key will remain intact
-            if (key === keyToParse) {
-                let assignments = sources(target[key]);
-                if (assignments) {
-                    if (!Array.isArray(target) && !Array.isArray(assignments)) assignments = [assignments];
-                    Object.assign(target, ...assignments);
-                }
-            } else if (target[key] && typeof target[key] === 'object') {
-                this.assignDeepKey(target[key], keyToParse, sources);
+    // parser shoud return object or array of objects, null, undefined or nothing
+    assignDeepKey: function (keyToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = this.get(object, ...keys);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if (key === keyToParse) {
+                        let assignments = parser(node[key]);
+                        if (assignments) {
+                            if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
+                            Object.assign(node, ...assignments);
+                        }
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
             }
-        });
+        };
+        parse(...keys);
     },
-    // sources shoud return object or array of objects, null or undefined
-    assignDeepKeyParent: function (target, keyToParse, sources, parent, parentKey) {
-        if (!parent) parent = target;
-        Object.keys(target).forEach((key) => {
-            // if sources returns empty object the target.key will remain intact
-            if (key === keyToParse) {
-                // in sources use const target = parentKey ? parent[parentKey] : parent;
-                let assignments = sources(parent, parentKey);
-                if (assignments) {
-                    if (!Array.isArray(parent) && !Array.isArray(assignments)) assignments = [assignments];
-                    Object.assign(parent, ...assignments);
-                }
-            } else if (target[key] && typeof target[key] === 'object') {
-                this.assignDeepKeyParent(target[key], keyToParse, sources, target, key);
+    // parser shoud return object or array of objects, null, undefined or nothing
+    assignDeepKeyParent: function (keyToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = this.get(object, ...keys);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if (keys.length && key === keyToParse) {
+                        const parent = this.get(object, ...keys.slice(0, -1));
+                        let assignments = parser(parent, ...keys.slice(-1, 1));
+                        if (assignments) {
+                            if (!Array.isArray(parent) && !Array.isArray(assignments)) assignments = [assignments];
+                            Object.assign(parent, ...assignments);
+                        }
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
             }
-        });
+        };
+        parse(...keys);
     },
     // deep parse a given object by a given parser
     parseDeep: function (parser, object, ...keys) {
