@@ -189,28 +189,66 @@ module.exports = {
         }
         return this.mergeDeep(target, ...sources);
     },
-    // sources shoud return object or array of objects, null or undefined
-    replaceDeep: function (target, keyToReplace, sources) {
-        Object.keys(target).forEach((key) => {
-            // passes if sources returns empty object, should return undefined or null to avoid key removal
-            if (key === keyToReplace) {
-                let assignments = sources(target[key]);
-                if (assignments) {
-                    if (!Array.isArray(assignments)) assignments = [assignments];
-                    Object.assign(target, ...assignments);
-                    delete target[key];
-                    // key found, replaced, the result may also include a keyToReplace so start over
-                    return this.replaceDeep(target, keyToReplace, sources);
-                }
-            } else if (target[key] && typeof target[key] === 'object') {
-                this.replaceDeep(target[key], keyToReplace, sources);
+    // parser shoud return object or array of objects, null, undefined or nothing
+    replaceDeep: function (parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = keys.reduce((node, key) => node[key], object);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    let assignments = parser({ [key]: node[key] });
+                    if (assignments) {
+                        if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
+                        Object.assign(node, ...assignments) && delete node[key] && parse(...keys);
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
             }
-        });
+        };
+        parse(...keys);
+    },
+    // parser shoud return object or array of objects, null, undefined or nothing
+    replaceDeepKey: function (keyToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = keys.reduce((node, key) => node[key], object);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if (key === keyToParse) {
+                        let assignments = parser(node[key]);
+                        if (assignments) {
+                            if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
+                            Object.assign(node, ...assignments) && delete node[key] && parse(...keys);
+                        }
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
+            }
+        };
+        parse(...keys);
+    },
+    // parser shoud return object or array of objects, null, undefined or nothing
+    replaceDeepKeyParent: function (keyToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = keys.reduce((node, key) => node[key], object);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if (keys.length && key === keyToParse) {
+                        const parent = keys.slice(0, -1).reduce((node, key) => node[key], object);
+                        let assignments = parser(parent, String(keys.slice(-1, 1)));
+                        if (assignments) {
+                            if (!Array.isArray(parent) && !Array.isArray(assignments)) assignments = [assignments];
+                            Object.assign(parent, ...assignments) && delete parent[String(keys.slice(-1, 1))] && parse(...keys.slice(0, -1));
+                        }
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
+            }
+        };
+        parse(...keys);
     },
     // parser shoud return object or array of objects, null, undefined or nothing
     assignDeep: function (parser, object, ...keys) {
         const parse = (...keys) => {
-            const node = this.get(object, ...keys);
+            const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     let assignments = parser({ [key]: node[key] });
@@ -227,7 +265,7 @@ module.exports = {
     // parser shoud return object or array of objects, null, undefined or nothing
     assignDeepKey: function (keyToParse, parser, object, ...keys) {
         const parse = (...keys) => {
-            const node = this.get(object, ...keys);
+            const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (key === keyToParse) {
@@ -246,12 +284,12 @@ module.exports = {
     // parser shoud return object or array of objects, null, undefined or nothing
     assignDeepKeyParent: function (keyToParse, parser, object, ...keys) {
         const parse = (...keys) => {
-            const node = this.get(object, ...keys);
+            const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (keys.length && key === keyToParse) {
-                        const parent = this.get(object, ...keys.slice(0, -1));
-                        let assignments = parser(parent, ...keys.slice(-1, 1));
+                        const parent = keys.slice(0, -1).reduce((node, key) => node[key], object);
+                        let assignments = parser(parent, String(keys.slice(-1, 1)));
                         if (assignments) {
                             if (!Array.isArray(parent) && !Array.isArray(assignments)) assignments = [assignments];
                             Object.assign(parent, ...assignments);
@@ -266,7 +304,7 @@ module.exports = {
     // deep parse a given object by a given parser
     parseDeep: function (parser, object, ...keys) {
         const parse = (...keys) => {
-            const node = this.get(object, ...keys);
+            const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     parser(...keys, key) && parse(...keys);
@@ -279,7 +317,7 @@ module.exports = {
     // deep parse a given object key by a given parser
     parseDeepKey: function (keyToParse, parser, object, ...keys) {
         const parse = (...keys) => {
-            const node = this.get(object, ...keys);
+            const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (key === keyToParse) parser(...keys, key) && parse(...keys);
@@ -292,10 +330,10 @@ module.exports = {
     // deep parse a given object key's parent by a given parser
     parseDeepKeyParent: function (keyToParse, parser, object, ...keys) {
         const parse = (...keys) => {
-            const node = this.get(object, ...keys);
+            const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (key === keyToParse) parser(...keys) && parse(...keys);
+                    if (keys.length && key === keyToParse) parser(...keys) && parse(...keys.slice(0, -1));
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
