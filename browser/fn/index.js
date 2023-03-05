@@ -49,7 +49,7 @@ module.exports = {
     isObjectNotArray: function (item) {
         return item && typeof item === 'object' && !Array.isArray(item);
     },
-   // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
+    // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
     get: (object, ...refs) => {
         return refs.reduce((node, ref) => {
@@ -322,35 +322,12 @@ module.exports = {
         if (element.className && element.classList.contains(className)) return true;
         return false;
     },
-    //<!-- Parse url to access url parts -->
-    // parser.href;     // => "http://example.com:3000/pathname/?search=test&ddd=sss#hash"
-    // parser.protocol; // => "http:"
-    // parser.host;     // => "example.com:3000"
-    // parser.hostname; // => "example.com"
-    // parser.port;     // => "3000"
-    // parser.pathname; // => "/pathname/"
-    // parser.hash;     // => "#hash"
-    // parser.search;   // => "?search=test&ddd=sss" // querystring
-    // parser.origin;   // => "http://example.com:3000"
-    parseUrl: function (url) {
-        const location = document.createElement('a');
-        location.href = url;
-        // IE doesn't populate all link properties when setting .href with a relative URL,
-        // however .href will return an absolute URL which then can be used on itself
-        // to populate these additional fields.
-        if (location.host == '') {
-            location.href = location.href;
-        }
-        return location;
-    },
-    isSameOrigin: function (url) {
-        const parsed = this.parseUrl(url);
-        return parsed.protocol === window.location.protocol && parsed.host === window.location.host;
-    },
+    isSameOrigin: (url) => new URL(url).origin === window.location.origin,
+    // custom queryString parser, returns object or array
     parseQueryString: function (queryString, asArray) {
         let result = asArray ? [] : {};
         if (!queryString) return result;
-        queryString = decodeURI(queryString).replace(/^\?/g, '');
+        queryString = decodeURIComponent(queryString).replace(/^\?/g, '');
         let params = queryString.split('&');
         if (params.length > 0) {
             for (let i = 0; i < params.length; i++) {
@@ -359,8 +336,15 @@ module.exports = {
                     result[args[0]] = true;
                 } else if (this.isNumeric(args[1])) {
                     result[args[0]] = parseFloat(args[1]);
+                } else if (args[1].charAt(0) === '{') {
+                    try {
+                        result[args[0]] = JSON.parse(args[1]);
+                    } catch (e) {}
                 } else if (args[1].includes(',')) {
                     result[args[0]] = args[1].split(',');
+                    result[args[0]].forEach((item, i) => {
+                        if (this.isNumeric(item)) result[args[0]][i] = parseFloat(item);
+                    });
                 } else {
                     result[args[0]] = args[1];
                 }
@@ -370,7 +354,7 @@ module.exports = {
     },
     queryStringify: function (object) {
         return Object.keys(object)
-            .map((key) => (object[key] == 'true' ? key : key + '=' + object[key]))
+            .map((key) => (object[key] === true ? key : Array.isArray(object[key]) ? key + '=' + object[key].join(',') : typeof object[key] === 'object' ? key + '=' + JSON.stringify(object[key]) : key + '=' + object[key]))
             .join('&');
     },
     mergeQueryStrings: function (initial, upserts) {
@@ -382,30 +366,19 @@ module.exports = {
     },
     adjustUrlPathSegment: function (url, pathSegment, replacement, prependIfNoMatch = true) {
         if (!(pathSegment instanceof RegExp)) throw new TypeError('Path Segment not a regex');
-        const parsedUrl = this.parseUrl(url);
-        const urlPath = parsedUrl.pathname.substring(1);
+        const uri = new URL(url);
+        const urlPath = uri.pathname.substring(1);
         // pathSegment must contain the trailing slash
         if (pathSegment.test(urlPath)) {
-            parsedUrl.pathname = urlPath.replace(pathSegment, replacement + '/');
+            uri.pathname = urlPath.replace(pathSegment, replacement + '/');
         } else if (!urlPath || prependIfNoMatch) {
-            parsedUrl.pathname = replacement + '/' + urlPath;
+            uri.pathname = replacement + '/' + urlPath;
         } else {
             const pathParts = urlPath.split('/');
             pathParts[pathParts.length - 1] = replacement + '/' + pathParts[pathParts.length - 1];
-            parsedUrl.pathname = pathParts.join('/');
+            uri.pathname = pathParts.join('/');
         }
-        return parsedUrl.href;
-    },
-    getUrlParameter: function (url, param) {
-        const qs = this.parseUrl(url).search.substring(1);
-        const urlParams = qs.split('&');
-        for (let i = 0; i < urlParams.length; i++) {
-            let args = urlParams[i].split('=');
-            if (args[0] === param) {
-                let result = decodeURIComponent(args[1]);
-                return args[1] === undefined ? true : this.isNumeric(result) ? parseFloat(result) : result;
-            }
-        }
+        return uri.href;
     },
     //<!-- Get url fragment -->
     getHash: function (url) {

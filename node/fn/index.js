@@ -488,13 +488,13 @@ module.exports = {
         }
         return result;
     },
-    // custom simple query stringify (will be revised)
-    queryStringify: (object) => {
+    // custom simple query stringify
+    queryStringify: function (object) {
         return Object.keys(object)
-            .map((key) => (object[key] == 'true' ? key : key + '=' + object[key]))
+            .map((key) => (object[key] === true ? key : Array.isArray(object[key]) ? key + '=' + object[key].join(',') : typeof object[key] === 'object' ? key + '=' + JSON.stringify(object[key]): key + '=' + object[key]))
             .join('&');
     },
-    // merge queryStrings (will be revised)
+    // merge queryStrings
     mergeQueryStrings: function (initial, upserts) {
         if (typeof upserts === 'string') {
             return this.queryStringify(Object.assign(this.parseQueryString(initial), this.parseQueryString(upserts)));
