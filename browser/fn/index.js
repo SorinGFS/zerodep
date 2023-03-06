@@ -43,12 +43,12 @@ module.exports = {
         }
         return false;
     },
-    isNumeric: function (string) {
-        return !isNaN(parseFloat(string)) && isFinite(string);
-    },
-    isObjectNotArray: function (item) {
-        return item && typeof item === 'object' && !Array.isArray(item);
-    },
+    // test if string is numeric
+    isNumeric: (string) => !isNaN(parseFloat(string)) && isFinite(string),
+    // test if type is object but not array
+    isObjectNotArray: (object) => object && typeof object === 'object' && !Array.isArray(object),
+    // test if array and has no object items
+    isSimpleArray: (array) => Array.isArray(array) && !array.filter((item) => typeof item === 'object').length,
     // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
     get: (object, ...refs) => {
@@ -327,37 +327,62 @@ module.exports = {
     parseQueryString: function (queryString, asArray) {
         let result = asArray ? [] : {};
         if (!queryString) return result;
-        queryString = decodeURIComponent(queryString).replace(/^\?/g, '');
+        queryString = decodeURIComponent(queryString).replace(/^\?/, '');
         let params = queryString.split('&');
         if (params.length > 0) {
             for (let i = 0; i < params.length; i++) {
                 let args = params[i].split('=');
-                if (args[1] === undefined) {
-                    result[args[0]] = true;
-                } else if (this.isNumeric(args[1])) {
-                    result[args[0]] = parseFloat(args[1]);
-                } else if (args[1].charAt(0) === '{') {
-                    try {
-                        result[args[0]] = JSON.parse(args[1]);
-                    } catch (e) {}
-                } else if (args[1].includes(',')) {
-                    result[args[0]] = args[1].split(',');
-                    result[args[0]].forEach((item, i) => {
-                        if (this.isNumeric(item)) result[args[0]][i] = parseFloat(item);
-                    });
-                } else {
-                    result[args[0]] = args[1];
+                if (args[1] !== undefined) {
+                    if (args[1] === 'true') {
+                        result[args[0]] = true;
+                    } else if (args[1] === 'false') {
+                        result[args[0]] = false;
+                    } else if (args[1] === 'null') {
+                        result[args[0]] = null;
+                    } else if (this.isNumeric(args[1])) {
+                        result[args[0]] = parseFloat(args[1]);
+                    } else if (args[1].charAt(0) === '{' || args[1].charAt(0) === '[') {
+                        try {
+                            result[args[0]] = JSON.parse(args[1]);
+                        } catch (e) {
+                            result[args[0]] = 'malformed';
+                        }
+                    } else if (args[1].includes(',')) {
+                        result[args[0]] = args[1].split(',');
+                        result[args[0]].forEach((item, i) => {
+                            if (item === 'true') result[args[0]][i] = true;
+                            if (item === 'false') result[args[0]][i] = false;
+                            if (item === 'null') result[args[0]][i] = null;
+                            if (this.isNumeric(item)) result[args[0]][i] = parseFloat(item);
+                            if (item.charAt(0) === '{' || item.charAt(0) === '[') {
+                                try {
+                                    result[args[0]][i] = JSON.parse(item);
+                                } catch (e) {
+                                    result[args[0]][i] = 'malformed';
+                                }
+                            }
+                        });
+                    } else {
+                        result[args[0]] = args[1];
+                    }
                 }
             }
         }
         return result;
     },
+    // custom query stringify
     queryStringify: function (object) {
-        return Object.keys(object)
-            .map((key) => (object[key] === true ? key : Array.isArray(object[key]) ? key + '=' + object[key].join(',') : typeof object[key] === 'object' ? key + '=' + JSON.stringify(object[key]) : key + '=' + object[key]))
-            .join('&');
+        if (typeof object !== 'object' || Array.isArray(object)) return '';
+        return (
+            '?' +
+            Object.keys(object)
+                .map((key) => (this.isSimpleArray(object[key]) ? key + '=' + object[key].join(',') : typeof object[key] === 'object' ? key + '=' + JSON.stringify(object[key]) : key + '=' + object[key]))
+                .join('&')
+        );
     },
+    // merge two queryStrings or object with queryString
     mergeQueryStrings: function (initial, upserts) {
+        if (typeof initial !== 'string' || Array.isArray(upserts)) return '';
         if (typeof upserts === 'string') {
             return this.queryStringify(Object.assign(this.parseQueryString(initial), this.parseQueryString(upserts)));
         } else if (typeof upserts === 'object') {
