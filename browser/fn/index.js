@@ -381,6 +381,9 @@ module.exports = {
         );
     },
     // merge two queryStrings or object with queryString
+    // test example:
+    // const initial = '?empt=&undefined&true=true&false=false&null=null&zero=0&one=1&arr=1,2,3&obj={"foo":2,"deep":{"empty":"","null":null}}';
+    // const upserts = { empty: '', tru: true, fals: false, nul: null, zer: 0, once: 1, deepArr: [0, null, , 'a', { a: '' }] };
     mergeQueryStrings: function (initial, upserts) {
         if (typeof initial !== 'string' || Array.isArray(upserts)) return '';
         if (typeof upserts === 'string') {

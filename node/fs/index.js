@@ -172,4 +172,24 @@ module.exports = {
             }
         }
     },
+    download: async function (url, ...pathResolveArgs) {
+        const { Readable } = require('stream');
+        const { finished } = require('stream/promises');
+        const stream = fs.createWriteStream(path.resolve(...pathResolveArgs));
+        const { body } = await fetch(url);
+        await finished(Readable.fromWeb(body).pipe(stream));
+    },
+    pathResolveArgsFromUri: function (uriReference, options = {}) {
+        const { base = 'schema:/', pathOnly = true, noSchema = false, subdomainsNested = false } = options;
+        const uri = new URL(uriReference, base);
+        const pathname = decodeURIComponent(uri.pathname).replaceAll(':', '/').replaceAll('\\', '/').split('/');
+        if (pathOnly) return pathname;
+        const schema = uri.protocol.split(':')[0];
+        const isIpV4 = /^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/.test(uri.hostname);
+        const isIpV6 = /^[\[].*[\]]$/.test(uri.hostname);
+        const hostname = isIpV6 ? [uri.hostname.replaceAll(':', '.')] : isIpV4 || !subdomainsNested ? [uri.hostname] : [uri.hostname.split('.').slice(-2).join('.'), ...uri.hostname.split('.').slice(0, -2).reverse()];
+        // username and port shouldn't exist in a schema id, but if they do we need to ensure that they will not overwrite default schema
+        if (noSchema) return [uri.port, ...hostname, uri.username, ...pathname];
+        return [schema, uri.port, ...hostname, uri.username, ...pathname];
+    },
 };

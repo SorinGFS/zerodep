@@ -460,7 +460,32 @@ module.exports = {
         return JSON.stringify(s(a)) === JSON.stringify(s(b));
     },
     // escape regExp special characters in order to find them literally
-    escapeRegExp: (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), // $& means the whole matched string
+    escapeRegex: (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), // $& means the whole matched string
+    // string parser
+    search: (string, regex, parser) => {
+        do {
+            var match = regex.exec(string);
+            if (match != null) parser(match);
+        } while (match != null);
+    },
+    // same as string.matchAll(regex) except it returns array instead of iterator
+    stringMatches: function (string, regex) {
+        let array = [];
+        this.search(string, regex, (match) => array.push(match));
+        return array;
+    },
+    // same as string.match(regex) except it returns group matches only
+    stringCaptureGroupMatches: function (string, regex) {
+        let array = [];
+        this.search(string, regex, (match) => array.push(match.shift() && match.find((value) => value)));
+        return array;
+    },
+    // same as string.match(regex) except it returns group matches first
+    stringCaptureGroupsOrMatches: function (string, regex) {
+        let array = [];
+        this.search(string, regex, (match) => array.push(match.reverse().find((value) => value)));
+        return array;
+    },
     // custom queryString parser, returns object or array
     parseQueryString: function (queryString, asArray) {
         let result = asArray ? [] : {};
@@ -519,6 +544,9 @@ module.exports = {
         );
     },
     // merge two queryStrings or object with queryString
+    // test example:
+    // const initial = '?empt=&undefined&true=true&false=false&null=null&zero=0&one=1&arr=1,2,3&obj={"foo":2,"deep":{"empty":"","null":null}}';
+    // const upserts = { empty: '', tru: true, fals: false, nul: null, zer: 0, once: 1, deepArr: [0, null, , 'a', { a: '' }] };
     mergeQueryStrings: function (initial, upserts) {
         if (typeof initial !== 'string' || Array.isArray(upserts)) return '';
         if (typeof upserts === 'string') {
