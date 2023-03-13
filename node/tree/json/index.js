@@ -5,7 +5,7 @@ const fs = require('../../fs');
 
 const loader = (...pathResolveArgs) => {
     const file = String(pathResolveArgs.slice(-1));
-    if (['json'].includes(file.split('.').pop())) {
+    if (fs.pathExtName(file) === '.json') {
         return { [file.split('.').slice(0, -1).join('.')]: require(fs.pathResolve(...pathResolveArgs)) };
     }
 };
