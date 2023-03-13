@@ -151,6 +151,9 @@ module.exports = {
             }
         }
     },
+    rename: function (oldPath, newPath) {
+        fs.renameSync(oldPath, newPath);
+    },
     removeDir: function (...pathResolveArgs) {
         fs.rmSync(path.resolve(...pathResolveArgs), { recursive: true });
     },
@@ -191,5 +194,12 @@ module.exports = {
         // username and port shouldn't exist in a schema id, but if they do we need to ensure that they will not overwrite default schema
         if (noSchema) return [uri.port, ...hostname, uri.username, ...pathname];
         return [schema, uri.port, ...hostname, uri.username, ...pathname];
+    },
+    filePathResolveArgs: function (options, ...pathResolveArgs) {
+        const { parser = '', index = 'index' } = options;
+        if (!parser) return pathResolveArgs;
+        const lastPath = pathResolveArgs.pop();
+        const fileName = !lastPath ? `${index}.${parser}` : !path.extname(lastPath) ? lastPath + `.${parser}` : lastPath;
+        return [...pathResolveArgs, fileName];
     },
 };
