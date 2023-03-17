@@ -199,7 +199,7 @@ module.exports = {
         const { parser = '', index = 'index' } = options;
         if (!parser) return pathResolveArgs;
         const lastPath = pathResolveArgs.pop();
-        const fileName = !lastPath ? `${index}.${parser}` : !path.extname(lastPath) ? lastPath + `.${parser}` : lastPath;
+        const fileName = !lastPath ? `${index}.${parser}` : path.extname(lastPath) !== `.${parser}` ? lastPath + `.${parser}` : lastPath;
         return [...pathResolveArgs, fileName];
     },
 };
