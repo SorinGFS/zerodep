@@ -34,6 +34,9 @@ module.exports = {
     links: function (...pathResolveArgs) {
         return fs.readdirSync(path.resolve(...pathResolveArgs)).filter((file) => fs.lstatSync(path.resolve(...pathResolveArgs, file)).isSymbolicLink());
     },
+    test: function (regex, ...pathResolveArgs) {
+        return regex.test(path.resolve(...pathResolveArgs));
+    },
     exists: function (...pathResolveArgs) {
         return fs.existsSync(path.resolve(...pathResolveArgs));
     },
@@ -104,7 +107,7 @@ module.exports = {
             try {
                 fs.unlinkSync(path.resolve(...pathResolveArgs));
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         }
     },
@@ -119,7 +122,7 @@ module.exports = {
         try {
             return fs.readFileSync(file, options);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     },
     writeFile: function (file, content, printSuccess = false) {
@@ -129,7 +132,7 @@ module.exports = {
             fs.writeFileSync(file, content);
             if (printSuccess) console.log(`File ${file} written successfully.`);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     },
     appendFile: function (file, content, printSuccess = false) {
@@ -139,7 +142,7 @@ module.exports = {
             fs.appendFileSync(file, content);
             if (printSuccess) console.log(`File ${file} updated successfully.`);
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     },
     removeFile: function (...pathResolveArgs) {
@@ -147,7 +150,7 @@ module.exports = {
             try {
                 fs.unlinkSync(path.resolve(...pathResolveArgs));
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         }
     },
@@ -199,7 +202,7 @@ module.exports = {
         const { parser = '', index = 'index' } = options;
         if (!parser) return pathResolveArgs;
         const lastPath = pathResolveArgs.pop();
-        const fileName = !lastPath ? `${index}.${parser}` : path.extname(lastPath) !== `.${parser}` ? lastPath + `.${parser}` : lastPath;
+        const fileName = !lastPath ? `${index}.${parser}` : path.extname(lastPath).toLowerCase() !== `.${parser}`.toLowerCase() ? lastPath + `.${parser}` : lastPath;
         return [...pathResolveArgs, fileName];
     },
 };
