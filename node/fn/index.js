@@ -199,8 +199,12 @@ module.exports = {
                 Object.keys(node).forEach((key) => {
                     let assignments = parser({ [key]: node[key] });
                     if (assignments) {
-                        if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
-                        Object.assign(node, ...assignments) && delete node[key] && parse(...keys);
+                        if (Array.isArray(node)) {
+                            node[key] = assignments;
+                        } else {
+                            if (!Array.isArray(assignments)) assignments = [assignments];
+                            Object.assign(node, ...assignments) && delete node[key] && parse(...keys);
+                        }
                     }
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
@@ -217,8 +221,12 @@ module.exports = {
                     if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) {
                         let assignments = parser(node[key]);
                         if (assignments) {
-                            if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
-                            Object.assign(node, ...assignments) && delete node[key] && parse(...keys);
+                            if (Array.isArray(node)) {
+                                node[key] = assignments;
+                            } else {
+                                if (!Array.isArray(assignments)) assignments = [assignments];
+                                Object.assign(node, ...assignments) && delete node[key] && parse(...keys);
+                            }
                         }
                     }
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
@@ -234,11 +242,16 @@ module.exports = {
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) {
-                        const parent = keys.slice(0, -1).reduce((node, key) => node[key], object);
-                        let assignments = parser(parent, String(keys.slice(-1, 1)));
+                        const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
+                        let assignments = parser(granParent, String(keys.slice(-1)));
                         if (assignments) {
-                            if (!Array.isArray(parent) && !Array.isArray(assignments)) assignments = [assignments];
-                            Object.assign(parent, ...assignments) && delete parent[String(keys.slice(-1, 1))] && parse(...keys.slice(0, -1));
+                            if (Array.isArray(granParent)) {
+                                granParent[String(keys.slice(-1))] = assignments;
+                                parse(...keys.slice(0, -1));
+                            } else {
+                                if (!Array.isArray(assignments)) assignments = [assignments];
+                                Object.assign(granParent, ...assignments) && delete granParent[String(keys.slice(-1))] && parse(...keys.slice(0, -1));
+                            }
                         }
                     }
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
@@ -255,8 +268,12 @@ module.exports = {
                 Object.keys(node).forEach((key) => {
                     let assignments = parser({ [key]: node[key] });
                     if (assignments) {
-                        if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
-                        Object.assign(node, ...assignments);
+                        if (Array.isArray(node)) {
+                            node[key] = assignments;
+                        } else {
+                            if (!Array.isArray(assignments)) assignments = [assignments];
+                            Object.assign(node, ...assignments);
+                        }
                     }
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
@@ -273,8 +290,12 @@ module.exports = {
                     if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) {
                         let assignments = parser(node[key]);
                         if (assignments) {
-                            if (!Array.isArray(node) && !Array.isArray(assignments)) assignments = [assignments];
-                            Object.assign(node, ...assignments);
+                            if (Array.isArray(node)) {
+                                node[key] = assignments;
+                            } else {
+                                if (!Array.isArray(assignments)) assignments = [assignments];
+                                Object.assign(node, ...assignments);
+                            }
                         }
                     }
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
@@ -290,11 +311,15 @@ module.exports = {
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) {
-                        const parent = keys.slice(0, -1).reduce((node, key) => node[key], object);
-                        let assignments = parser(parent, String(keys.slice(-1, 1)));
+                        const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
+                        let assignments = parser(granParent, String(keys.slice(-1)));
                         if (assignments) {
-                            if (!Array.isArray(parent) && !Array.isArray(assignments)) assignments = [assignments];
-                            Object.assign(parent, ...assignments);
+                            if (Array.isArray(granParent)) {
+                                granParent[String(keys.slice(-1))] = assignments;
+                            } else {
+                                if (!Array.isArray(assignments)) assignments = [assignments];
+                                Object.assign(granParent, ...assignments);
+                            }
                         }
                     }
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
