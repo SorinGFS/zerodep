@@ -379,11 +379,12 @@ module.exports = {
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).some((key) => {
-                    if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))))
+                    if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) {
                         if (parser(...keys) !== undefined) {
                             parse(...keys.slice(0, -1));
                             return true;
                         }
+                    }
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
