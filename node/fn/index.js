@@ -194,7 +194,6 @@ module.exports = {
     // parser shoud return object or array of objects, null, undefined or nothing
     replaceDeep: function (parser, object, ...keys) {
         const parse = (...keys) => {
-            console.log(keys);
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).some((key) => {
@@ -218,7 +217,6 @@ module.exports = {
     // parser shoud return object or array of objects, null, undefined or nothing
     replaceDeepKey: function (keyToParse, parser, object, ...keys) {
         const parse = (...keys) => {
-            console.log(keys);
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).some((key) => {
