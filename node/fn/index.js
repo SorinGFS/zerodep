@@ -341,7 +341,7 @@ module.exports = {
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    parser(...keys, key);
+                    parser(...keys, key) && parse(...keys);
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
@@ -354,7 +354,7 @@ module.exports = {
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) parser(...keys, key);
+                    if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) parser(...keys, key) && parse(...keys);
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
@@ -367,7 +367,7 @@ module.exports = {
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) parser(...keys);
+                    if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) parser(...keys) && parse(...keys.slice(0, -1));
                     if (node[key] && typeof node[key] === 'object') parse(...keys, key);
                 });
             }
