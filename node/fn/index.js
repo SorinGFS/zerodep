@@ -197,7 +197,7 @@ module.exports = {
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).find((key) => {
-                    let assignments = parser({ [key]: node[key] });
+                    let assignments = parser(node[key], key);
                     if (assignments !== undefined) {
                         if (Array.isArray(node)) {
                             node[key] = assignments;
@@ -221,7 +221,7 @@ module.exports = {
             if (node && typeof node === 'object') {
                 Object.keys(node).find((key) => {
                     if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) {
-                        let assignments = parser(node[key]);
+                        let assignments = parser(node[key], key);
                         if (assignments !== undefined) {
                             if (Array.isArray(node)) {
                                 node[key] = assignments;
@@ -247,7 +247,8 @@ module.exports = {
                 Object.keys(node).find((key) => {
                     if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) {
                         const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
-                        let assignments = parser(granParent, String(keys.slice(-1)));
+                        // parser args: targetParent, targetParentParentKey, and matching key (useful to identify matched regex)
+                        let assignments = parser(granParent[String(keys.slice(-1))], String(keys.slice(-1)), key);
                         if (assignments !== undefined) {
                             if (Array.isArray(granParent)) {
                                 granParent[String(keys.slice(-1))] = assignments;
@@ -271,7 +272,7 @@ module.exports = {
             const node = keys.reduce((node, key) => node[key], object);
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
-                    let assignments = parser({ [key]: node[key] });
+                    let assignments = parser(node[key], key);
                     if (assignments !== undefined) {
                         if (Array.isArray(node)) {
                             node[key] = assignments;
@@ -293,7 +294,7 @@ module.exports = {
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) {
-                        let assignments = parser(node[key]);
+                        let assignments = parser(node[key], key);
                         if (assignments !== undefined) {
                             if (Array.isArray(node)) {
                                 node[key] = assignments;
@@ -317,7 +318,8 @@ module.exports = {
                 Object.keys(node).forEach((key) => {
                     if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) {
                         const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
-                        let assignments = parser(granParent, String(keys.slice(-1)));
+                        // parser args: targetParent, targetParentParentKey, and matching key (useful to identify matched regex)
+                        let assignments = parser(granParent[String(keys.slice(-1))], String(keys.slice(-1)), key);
                         if (assignments !== undefined) {
                             if (Array.isArray(granParent)) {
                                 granParent[String(keys.slice(-1))] = assignments;
