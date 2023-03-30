@@ -439,16 +439,13 @@ module.exports = {
         if (!(unicodePoints instanceof Array)) return '';
         return unicodePoints.map((i) => String.fromCharCode(i)).join('');
     },
-    //<!-- Capitalize -->
-    capitalizeFirstLetter: function (string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    },
-    //<!-- Camelcase array of strings -->
-    camelcaseStringArray: function (array) {
-        if (array.constructor !== Array) return null;
-        let result = array[0].toLowerCase();
-        for (let i = 1; i < array.length; i++) {
-            result += this.capitalizeFirstLetter(array[i].toLowerCase());
+    // Capitalize
+    capitalizeFirstLetter: (string) => string.charAt(0).toUpperCase() + string.slice(1),
+    // camelCase strings
+    camelCase: function (...strings) {
+        let result = strings[0].toLowerCase();
+        for (let i = 1; i < strings.length; i++) {
+            result += this.capitalizeFirstLetter(strings[i].toLowerCase());
         }
         return result;
     },
