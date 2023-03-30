@@ -518,6 +518,18 @@ module.exports = {
         this.search(string, regex, (match) => array.push(match.reverse().find((value) => value)));
         return array;
     },
+    // uri reference
+    uriReference: (uri, base = 'schema:/') => {
+        base = new URL(base);
+        const url = new URL(uri, base);
+        if (url.protocol !== base.protocol || url.host !== base.host) return uri;
+        const baseParts = base.pathname.split('/');
+        const urlParts = url.pathname.split('/');
+        for (let i = 0; i < urlParts.length; i++) {
+            if (baseParts[i] !== urlParts[i]) return urlParts.slice(i).join('/') + url.search + url.hash;
+        }
+        return uri;
+    },
     // custom queryString parser, returns object or array
     parseQueryString: function (queryString, asArray) {
         let result = asArray ? [] : {};
@@ -598,17 +610,25 @@ module.exports = {
         return unicodePoints.map((i) => String.fromCharCode(i)).join('');
     },
     // reverse string
-    reverseString: (str) => str.split('').reverse().join(''),
+    reverseString: (string) => string.split('').reverse().join(''),
     // Capitalize
     capitalizeFirstLetter: (string) => string.charAt(0).toUpperCase() + string.slice(1),
-    // Camelcase array of strings
-    camelcaseStringArray: function (array) {
-        if (array.constructor !== Array) return null;
-        let result = array[0].toLowerCase();
-        for (let i = 1; i < array.length; i++) {
-            result += this.capitalizeFirstLetter(array[i].toLowerCase());
+    // camelCase strings
+    camelCase: function (...strings) {
+        let result = strings[0].toLowerCase();
+        for (let i = 1; i < strings.length; i++) {
+            result += this.capitalizeFirstLetter(strings[i].toLowerCase());
         }
         return result;
+    },
+    // prefix of two or multiple strings
+    prefixOf: (...strings) => {
+        // check args
+        if (!strings[0] || strings.length === 1) return strings[0] || '';
+        let i = 0;
+        // increment i while all strings have the same char at position i
+        while (strings[0][i] && strings.every((string) => string[i] === strings[0][i])) i++;
+        return strings[0].substring(0, i);
     },
     // simple sleep in milliseconds (sync)
     sleep: (milliseconds) => {
