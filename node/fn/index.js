@@ -518,17 +518,23 @@ module.exports = {
         this.search(string, regex, (match) => array.push(match.reverse().find((value) => value)));
         return array;
     },
-    // uri reference
-    uriReference: (uri, base = 'schema:/') => {
+    // the result relative uri reference applied to base will point to targetUriReference
+    relativeUriReference: (targetUriReference, base = 'schema:/') => {
         base = new URL(base);
-        const url = new URL(uri, base);
-        if (url.protocol !== base.protocol || url.host !== base.host) return uri;
+        const uri = new URL(targetUriReference, base);
+        if (uri.href === base.href) return '';
+        if (uri.protocol !== base.protocol) return targetUriReference;
+        if (uri.host !== base.host) return '//' + uri.host + uri.pathname + uri.search + uri.hash;
         const baseParts = base.pathname.split('/');
-        const urlParts = url.pathname.split('/');
-        for (let i = 0; i < urlParts.length; i++) {
-            if (baseParts[i] !== urlParts[i]) return urlParts.slice(i).join('/') + url.search + url.hash;
+        const uriParts = uri.pathname.split('/');
+        for (let i = 0; i < uriParts.length; i++) {
+            if (baseParts[i] !== uriParts[i] && i >= baseParts.length - 1) return uriParts.slice(i).join('/') + uri.search + uri.hash;
+            if (baseParts[i] !== uriParts[i]) return '../'.repeat(baseParts.length - i - 1) + uriParts.slice(i).join('/') + uri.search + uri.hash;
+            if (i === uriParts.length - 1 && uri.search !== base.search && uri.hash !== base.hash) return uri.search + uri.hash;
+            if (i === uriParts.length - 1 && uri.search !== base.search) return uri.search;
+            if (i === uriParts.length - 1 && uri.hash !== base.hash) return uri.hash;
         }
-        return uri;
+        return targetUriReference;
     },
     // custom queryString parser, returns object or array
     parseQueryString: function (queryString, asArray) {
