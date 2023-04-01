@@ -124,7 +124,7 @@ module.exports = {
     clone: (object, ...keys) => {
         // this is dead slow for larger objects
         const cloneDeep = (object) => {
-            if (typeof object !== 'object') return object;
+            if (typeof object !== 'object' || object === null) return object;
             else if (Array.isArray(object)) return object.map(cloneDeep);
             return Object.fromEntries(Object.entries(object).map(([key, value]) => [key, cloneDeep(value)]));
         };
@@ -142,7 +142,7 @@ module.exports = {
     structuredClone: (object, ...keys) => {
         // this is dead slow for larger objects
         const cloneDeep = (object) => {
-            if (typeof object !== 'object') return object;
+            if (typeof object !== 'object' || object === null) return object;
             else if (Array.isArray(object)) return object.map(cloneDeep);
             return Object.fromEntries(
                 Object.entries(object)
