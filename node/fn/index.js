@@ -132,6 +132,7 @@ module.exports = {
         }, object);
         if (target) return (target[key] = value);
     },
+    // returns a static object by embeding the values of the referenced keys
     clone: (object, ...keys) => {
         // this is dead slow for larger objects
         const cloneDeep = (object) => {
@@ -150,6 +151,7 @@ module.exports = {
         }, object);
         if (target) return cloneDeep(target[key]);
     },
+    // same as clone but object keys are sorted
     structuredClone: (object, ...keys) => {
         // this is dead slow for larger objects
         const cloneDeep = (object) => {
@@ -172,6 +174,7 @@ module.exports = {
         }, object);
         if (target) return cloneDeep(target[key]);
     },
+    // returns an array of deep keys not including shallow object keys
     deepKeys: function (object) {
         let array = [];
         Object.keys(object).forEach((key) => {
@@ -238,7 +241,9 @@ module.exports = {
                                 node[key] = assignments;
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
-                                Object.assign(node, ...assignments) && delete node[key];
+                                Object.assign(node, ...assignments);
+                                // preserve the key for recursion if assignments has return it, else remove it
+                                if (!assignments.find((assignment) => assignment[key])) delete node[key];
                             }
                             parse(...keys);
                             return true;
@@ -258,14 +263,16 @@ module.exports = {
                 Object.keys(node).find((key) => {
                     if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) {
                         const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
-                        // parser args: targetParent, targetParentParentKey, and matching key (useful to identify matched regex)
-                        let assignments = parser(granParent[String(keys.slice(-1))], String(keys.slice(-1)), key);
+                        const parentKey = String(keys.slice(-1));
+                        let assignments = parser(granParent[parentKey], parentKey, key);
                         if (assignments !== undefined) {
                             if (Array.isArray(granParent)) {
-                                granParent[String(keys.slice(-1))] = assignments;
+                                granParent[parentKey] = assignments;
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
-                                Object.assign(granParent, ...assignments) && delete granParent[String(keys.slice(-1))];
+                                Object.assign(granParent, ...assignments);
+                                // preserve the parentKey for recursion if assignments has return it, else remove it
+                                if (!assignments.find((assignment) => assignment[parentKey])) delete granParent[parentKey];
                             }
                             parse(...keys.slice(0, -1));
                             return true;
@@ -329,11 +336,11 @@ module.exports = {
                 Object.keys(node).forEach((key) => {
                     if (keys.length && (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key)))) {
                         const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
-                        // parser args: targetParent, targetParentParentKey, and matching key (useful to identify matched regex)
-                        let assignments = parser(granParent[String(keys.slice(-1))], String(keys.slice(-1)), key);
+                        const parentKey = String(keys.slice(-1));
+                        let assignments = parser(granParent[parentKey], parentKey, key);
                         if (assignments !== undefined) {
                             if (Array.isArray(granParent)) {
-                                granParent[String(keys.slice(-1))] = assignments;
+                                granParent[parentKey] = assignments;
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
                                 Object.assign(granParent, ...assignments);
