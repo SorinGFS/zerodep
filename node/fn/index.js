@@ -99,6 +99,12 @@ module.exports = {
                     .replaceAll('~0', '~')
             );
     },
+    // get: function (object, ...keys) {
+    //     if (typeof object === 'undefined') return false;
+    //     if (keys.length === 0) return object;
+    //     if (keys.length === 1) return object[keys[0]];
+    //     return this.get(object[keys.shift()], ...keys);
+    // },
     // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
     get: (object, ...keys) => {
@@ -110,19 +116,22 @@ module.exports = {
             }
         }, object);
     },
-    // get: function (object, ...keys) {
-    //     if (typeof object === 'undefined') return false;
-    //     if (keys.length === 0) return object;
-    //     if (keys.length === 1) return object[keys[0]];
-    //     return this.get(object[keys.shift()], ...keys);
-    // },
-    // set: function (value, object, ...keys) {
-    //     if (typeof object === 'undefined') return false;
-    //     if (keys.length === 0) return object = value;
-    //     if (keys.length === 1) return object[keys[0]] = value;
-    //     return this.set(value, object[keys.shift()], ...keys);
-    // },
+    // set deep object key (the deepest value will not be passed)
     set: (value, object, ...keys) => {
+        if (!keys.length) return (object = value);
+        const key = keys.pop();
+        const target = keys.reduce((node, key) => {
+            try {
+                if (node[key] !== undefined) return node[key];
+                if (node[key] === undefined) return (node[key] = {}) && node[key];
+            } catch (e) {
+                return undefined;
+            }
+        }, object);
+        if (target) return ((target[key] = value) && true) || true;
+    },
+    // set deep object key (the deepest value will be passed)
+    setDeep: (value, object, ...keys) => {
         if (!keys.length) return (object = value);
         const key = keys.pop();
         const target = keys.reduce((node, key) => {
@@ -132,7 +141,7 @@ module.exports = {
                 return undefined;
             }
         }, object);
-        if (target) return (target[key] = value);
+        if (target) return ((target[key] = value) && true) || true;
     },
     // returns a static object by embeding the values of the referenced keys
     clone: (object, ...keys) => {
