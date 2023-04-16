@@ -87,11 +87,11 @@ module.exports = {
         return Promise.resolve(target.reduce((acc, value) => this.mergeDeep(acc, parse(value)), {}));
     },
     // converts object keys to jsonPointer
-    jsonPointer: (...keys) => keys.map((key) => key.replace(/\\(.)/g, '$1').replaceAll('~', '~0').replaceAll('/', '~1')).join('/'),
+    jsonPointer: (...keys) => keys.map((key) => String(key).replace(/\\(.)/g, '$1').replaceAll('~', '~0').replaceAll('/', '~1')).join('/'),
     // converts jsonPointer to object keys
     jsonPointerKeys: (jsonPointer) => {
         return jsonPointer.split('/').map((key) =>
-            key
+        String(key)
                 .replace(/[\u0022\u005C\u0000-\u001F]/g, '\\$&')
                 .replaceAll('~1', '/')
                 .replaceAll('~0', '~')
