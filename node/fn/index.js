@@ -90,12 +90,14 @@ module.exports = {
     jsonPointer: (...keys) => keys.map((key) => String(key).replace(/\\(.)/g, '$1').replaceAll('~', '~0').replaceAll('/', '~1')).join('/'),
     // converts jsonPointer to object keys
     jsonPointerKeys: (jsonPointer) => {
-        return jsonPointer.split('/').map((key) =>
-        String(key)
-                .replace(/[\u0022\u005C\u0000-\u001F]/g, '\\$&')
-                .replaceAll('~1', '/')
-                .replaceAll('~0', '~')
-        );
+        return String(jsonPointer)
+            .split('/')
+            .map((key) =>
+                key
+                    .replace(/[\u0022\u005C\u0000-\u001F]/g, '\\$&')
+                    .replaceAll('~1', '/')
+                    .replaceAll('~0', '~')
+            );
     },
     // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
