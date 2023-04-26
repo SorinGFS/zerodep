@@ -143,6 +143,18 @@ module.exports = {
         }, object);
         if (target) return ((target[key] = value) && true) || true;
     },
+    delete: (object, ...keys) => {
+        if (!keys.length) return;
+        const key = keys.pop();
+        const target = keys.reduce((node, key) => {
+            try {
+                return node[key];
+            } catch (e) {
+                return undefined;
+            }
+        }, object);
+        if (target && typeof target[key] !== undefined) return (delete target[key] && true) || true;
+    },
     // returns a static object by embeding the values of the referenced keys
     clone: (object, ...keys) => {
         // this is dead slow for larger objects
