@@ -288,9 +288,18 @@ module.exports = {
                         const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
                         const parentKey = String(keys.slice(-1));
                         let assignments = parser(granParent[parentKey], parentKey, key);
-                        if (assignments !== undefined) {
+                        if (assignments instanceof Object) {
                             if (Array.isArray(granParent)) {
-                                granParent[parentKey] = assignments;
+                                Object.entries(assignments).forEach((entry) => {
+                                    if (granParent[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                        if (!Array.isArray(entry[1])) entry[1] = [entry[1]];
+                                        Object.assign(granParent[entry[0]], ...entry[1]);
+                                        // preserve the parentKey for recursion if assignments has return it, else remove it
+                                        if (!entry[1].find((assignment) => assignment[parentKey])) delete granParent[parentKey];
+                                    } else {
+                                        granParent[entry[0]] = entry[1];
+                                    }
+                                });
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
                                 Object.assign(granParent, ...assignments);
@@ -361,9 +370,16 @@ module.exports = {
                         const granParent = keys.slice(0, -1).reduce((node, key) => node[key], object);
                         const parentKey = String(keys.slice(-1));
                         let assignments = parser(granParent[parentKey], parentKey, key);
-                        if (assignments !== undefined) {
+                        if (assignments instanceof Object) {
                             if (Array.isArray(granParent)) {
-                                granParent[parentKey] = assignments;
+                                Object.entries(assignments).forEach((entry) => {
+                                    if (granParent[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                        if (!Array.isArray(entry[1])) entry[1] = [entry[1]];
+                                        Object.assign(granParent[entry[0]], ...entry[1]);
+                                    } else {
+                                        granParent[entry[0]] = entry[1];
+                                    }
+                                });
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
                                 Object.assign(granParent, ...assignments);
