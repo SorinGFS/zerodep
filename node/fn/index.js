@@ -235,12 +235,19 @@ module.exports = {
             if (node && typeof node === 'object') {
                 Object.keys(node).find((key) => {
                     let assignments = parser(node[key], key);
-                    if (assignments !== undefined) {
+                    if (assignments instanceof Object) {
+                        delete node[key];
                         if (Array.isArray(node)) {
-                            node[key] = assignments;
+                            Object.entries(assignments).forEach((entry) => {
+                                if (node[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                    Object.assign(node[entry[0]], entry[1]);
+                                } else {
+                                    node[entry[0]] = entry[1];
+                                }
+                            });
                         } else {
                             if (!Array.isArray(assignments)) assignments = [assignments];
-                            Object.assign(node, ...assignments) && delete node[key];
+                            Object.assign(node, ...assignments);
                         }
                         parse(...keys);
                         return true;
@@ -259,14 +266,19 @@ module.exports = {
                 Object.keys(node).find((key) => {
                     if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) {
                         let assignments = parser(node[key], key);
-                        if (assignments !== undefined) {
+                        if (assignments instanceof Object) {
+                            delete node[key];
                             if (Array.isArray(node)) {
-                                node[key] = assignments;
+                                Object.entries(assignments).forEach((entry) => {
+                                    if (node[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                        Object.assign(node[entry[0]], entry[1]);
+                                    } else {
+                                        node[entry[0]] = entry[1];
+                                    }
+                                });
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
                                 Object.assign(node, ...assignments);
-                                // preserve the key for recursion if assignments has return it, else remove it
-                                if (!assignments.find((assignment) => assignment[key])) delete node[key];
                             }
                             parse(...keys);
                             return true;
@@ -289,13 +301,11 @@ module.exports = {
                         const parentKey = String(keys.slice(-1));
                         let assignments = parser(granParent[parentKey], parentKey, key);
                         if (assignments instanceof Object) {
+                            delete granParent[parentKey];
                             if (Array.isArray(granParent)) {
                                 Object.entries(assignments).forEach((entry) => {
                                     if (granParent[entry[0]] instanceof Object && entry[1] instanceof Object) {
-                                        if (!Array.isArray(entry[1])) entry[1] = [entry[1]];
-                                        Object.assign(granParent[entry[0]], ...entry[1]);
-                                        // preserve the parentKey for recursion if assignments has return it, else remove it
-                                        if (!entry[1].find((assignment) => assignment[parentKey])) delete granParent[parentKey];
+                                        Object.assign(granParent[entry[0]], entry[1]);
                                     } else {
                                         granParent[entry[0]] = entry[1];
                                     }
@@ -303,8 +313,6 @@ module.exports = {
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
                                 Object.assign(granParent, ...assignments);
-                                // preserve the parentKey for recursion if assignments has return it, else remove it
-                                if (!assignments.find((assignment) => assignment[parentKey])) delete granParent[parentKey];
                             }
                             parse(...keys.slice(0, -1));
                             return true;
@@ -323,9 +331,15 @@ module.exports = {
             if (node && typeof node === 'object') {
                 Object.keys(node).forEach((key) => {
                     let assignments = parser(node[key], key);
-                    if (assignments !== undefined) {
+                    if (assignments instanceof Object) {
                         if (Array.isArray(node)) {
-                            node[key] = assignments;
+                            Object.entries(assignments).forEach((entry) => {
+                                if (node[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                    Object.assign(node[entry[0]], entry[1]);
+                                } else {
+                                    node[entry[0]] = entry[1];
+                                }
+                            });
                         } else {
                             if (!Array.isArray(assignments)) assignments = [assignments];
                             Object.assign(node, ...assignments);
@@ -345,9 +359,15 @@ module.exports = {
                 Object.keys(node).forEach((key) => {
                     if (key === keyToParse || (keyToParse instanceof RegExp && keyToParse.test(key))) {
                         let assignments = parser(node[key], key);
-                        if (assignments !== undefined) {
+                        if (assignments instanceof Object) {
                             if (Array.isArray(node)) {
-                                node[key] = assignments;
+                                Object.entries(assignments).forEach((entry) => {
+                                    if (node[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                        Object.assign(node[entry[0]], entry[1]);
+                                    } else {
+                                        node[entry[0]] = entry[1];
+                                    }
+                                });
                             } else {
                                 if (!Array.isArray(assignments)) assignments = [assignments];
                                 Object.assign(node, ...assignments);
@@ -374,8 +394,7 @@ module.exports = {
                             if (Array.isArray(granParent)) {
                                 Object.entries(assignments).forEach((entry) => {
                                     if (granParent[entry[0]] instanceof Object && entry[1] instanceof Object) {
-                                        if (!Array.isArray(entry[1])) entry[1] = [entry[1]];
-                                        Object.assign(granParent[entry[0]], ...entry[1]);
+                                        Object.assign(granParent[entry[0]], entry[1]);
                                     } else {
                                         granParent[entry[0]] = entry[1];
                                     }
