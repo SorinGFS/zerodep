@@ -1,8 +1,8 @@
 'use strict';
-// returns an interface for the structure bellow the given path
-const fs = require('./fs');
-const fn = require('./fn');
-const config = (...pathResolveArgs) => {
+// returns an access point for the structure bellow the given path
+const fs = require('../fs');
+const fn = require('../fn');
+const point = (...pathResolveArgs) => {
     if (!fs.exists(...pathResolveArgs)) return undefined;
     const workDirArgsLength = pathResolveArgs.length;
     const object = {};
@@ -20,4 +20,4 @@ const config = (...pathResolveArgs) => {
     parse(...pathResolveArgs);
     return object;
 };
-module.exports = config;
+module.exports = point;
