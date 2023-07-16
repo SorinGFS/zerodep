@@ -205,4 +205,8 @@ module.exports = {
         const fileName = !lastPath ? `${index}.${parser}` : path.extname(lastPath).toLowerCase() !== `.${parser}`.toLowerCase() ? lastPath + `.${parser}` : lastPath;
         return [...pathResolveArgs, fileName];
     },
+    // lack of options is intentional
+    watch: function (...pathResolveArgs) {
+        return fs.watch(path.resolve(...pathResolveArgs));
+    },
 };
