@@ -2,9 +2,10 @@
 // loading files in the specified directory choosen by the loader
 const fn = require('../fn');
 const fs = require('../fs');
-// load function
+// resolved path args must be a directory or a file
 const load = (loader, ...pathResolveArgs) => {
     if (!fs.exists(...pathResolveArgs)) return undefined;
+    if (fs.isFile(...pathResolveArgs)) return loader(...pathResolveArgs);
     const workDirArgsLength = pathResolveArgs.length;
     const object = {};
     const parse = (...pathResolveArgs) => {
