@@ -325,6 +325,38 @@ module.exports = {
         parse(...keys);
     },
     // parser shoud return object or array of objects, null, undefined or nothing
+    replaceDeepPath: function (pathToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = keys.reduce((node, key) => node[key], object);
+            if (node && typeof node === 'object') {
+                Object.keys(node).find((key) => {
+                    if ((typeof pathToParse === 'string' && [...keys, key].join('/').endsWith(pathToParse)) || (pathToParse instanceof RegExp && pathToParse.test([...keys, key].join('/')))) {
+                        let assignments = parser(node[key], key);
+                        if (assignments instanceof Object) {
+                            delete node[key];
+                            if (Array.isArray(node)) {
+                                Object.entries(assignments).forEach((entry) => {
+                                    if (node[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                        Object.assign(node[entry[0]], entry[1]);
+                                    } else {
+                                        node[entry[0]] = entry[1];
+                                    }
+                                });
+                            } else {
+                                if (!Array.isArray(assignments)) assignments = [assignments];
+                                Object.assign(node, ...assignments);
+                            }
+                            parse(...keys);
+                            return true;
+                        }
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
+            }
+        };
+        parse(...keys);
+    },
+    // parser shoud return object or array of objects, null, undefined or nothing
     assignDeep: function (parser, object, ...keys) {
         const parse = (...keys) => {
             const node = keys.reduce((node, key) => node[key], object);
@@ -411,6 +443,35 @@ module.exports = {
         };
         parse(...keys);
     },
+    // parser shoud return object or array of objects, null, undefined or nothing
+    assignDeepPath: function (pathToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = keys.reduce((node, key) => node[key], object);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if ((typeof pathToParse === 'string' && [...keys, key].join('/').endsWith(pathToParse)) || (pathToParse instanceof RegExp && pathToParse.test([...keys, key].join('/')))) {
+                        let assignments = parser(node[key], key);
+                        if (assignments instanceof Object) {
+                            if (Array.isArray(node)) {
+                                Object.entries(assignments).forEach((entry) => {
+                                    if (node[entry[0]] instanceof Object && entry[1] instanceof Object) {
+                                        Object.assign(node[entry[0]], entry[1]);
+                                    } else {
+                                        node[entry[0]] = entry[1];
+                                    }
+                                });
+                            } else {
+                                if (!Array.isArray(assignments)) assignments = [assignments];
+                                Object.assign(node, ...assignments);
+                            }
+                        }
+                    }
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
+            }
+        };
+        parse(...keys);
+    },
     // deep parse a given object by a given parser
     parseDeep: function (parser, object, ...keys) {
         const parse = (...keys) => {
@@ -450,6 +511,19 @@ module.exports = {
         };
         parse(...keys);
     },
+    // parse a deep path (string of consecutive keys joined by /)
+    parseDeepPath: function (pathToParse, parser, object, ...keys) {
+        const parse = (...keys) => {
+            const node = keys.reduce((node, key) => node[key], object);
+            if (node && typeof node === 'object') {
+                Object.keys(node).forEach((key) => {
+                    if ((typeof pathToParse === 'string' && [...keys, key].join('/').endsWith(pathToParse)) || (pathToParse instanceof RegExp && pathToParse.test([...keys, key].join('/')))) parser(...keys, key) && parse(...keys);
+                    if (node[key] && typeof node[key] === 'object') parse(...keys, key);
+                });
+            }
+        };
+        parse(...keys);
+    },
     // test a - b objects equality. Comparing objects this way is slow and wrong, use with care.
     areEqualObjects: (a, b) => {
         let s = (o) =>
@@ -460,6 +534,17 @@ module.exports = {
                     return i;
                 });
         return JSON.stringify(s(a)) === JSON.stringify(s(b));
+    },
+    // faster than areEqualObjects
+    areArraysIdentical: (arr1, arr2) => {
+        if (Array.isArray(arr1) && Array.isArray(arr2)) {
+            if (arr1.length !== arr2.length) return false;
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i] !== arr2[i]) return false;
+            }
+            return true;
+        }
+        return false;
     },
     // escape regExp special characters in order to find them literally
     escapeRegex: (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), // $& means the whole matched string
