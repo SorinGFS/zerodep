@@ -86,6 +86,19 @@ module.exports = {
         if (!Array.isArray(target)) return {};
         return Promise.resolve(target.reduce((acc, value) => this.mergeDeep(acc, parse(value)), {}));
     },
+    // sanitize stringified json before saving it to disk
+    sanitizeJson: (string) => {
+        const problematicChars = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u2028\u2029]/g;
+        // Replace control characters and non-printable characters with their escaped equivalents
+        const escapedJson = string.replace(problematicChars, function (match) {
+            return '\\u' + match.charCodeAt(0).toString(16).padStart(4, '0');
+        });
+        // Transform surrogate pairs into valid UTF-8 sequences
+        return escapedJson.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function (match) {
+            const codePoint = (match.charCodeAt(0) - 0xd800) * 0x400 + (match.charCodeAt(1) - 0xdc00) + 0x10000;
+            return '\\u' + codePoint.toString(16).padStart(4, '0');
+        });
+    },
     // converts object keys to jsonPointer
     jsonPointer: (...keys) => keys.map((key) => String(key).replace(/\\(.)/g, '$1').replaceAll('~', '~0').replaceAll('/', '~1')).join('/'),
     // converts jsonPointer to object keys
