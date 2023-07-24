@@ -593,7 +593,7 @@ module.exports = {
             if (i === uriParts.length - 1 && uri.search !== base.search) return uri.search;
             if (i === uriParts.length - 1 && uri.hash !== base.hash) return uri.hash;
         }
-        return targetUriReference;
+        return decodeURI(targetUriReference);
     },
     // custom queryString parser, returns object or array
     parseQueryString: function (queryString, asArray) {
