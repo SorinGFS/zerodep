@@ -583,17 +583,17 @@ module.exports = {
         const uri = new URL(targetUriReference, base);
         if (uri.href === base.href) return '';
         if (uri.protocol !== base.protocol) return targetUriReference;
-        if (uri.host !== base.host) return '//' + uri.host + uri.pathname + uri.search + uri.hash;
+        if (uri.host !== base.host) return '//' + decodeURI(uri.host + uri.pathname) + uri.search + decodeURI(uri.hash);
         const baseParts = base.pathname.split('/');
         const uriParts = uri.pathname.split('/');
         for (let i = 0; i < uriParts.length; i++) {
-            if (baseParts[i] !== uriParts[i] && i >= baseParts.length - 1) return uriParts.slice(i).join('/') + uri.search + uri.hash;
-            if (baseParts[i] !== uriParts[i]) return '../'.repeat(baseParts.length - i - 1) + uriParts.slice(i).join('/') + uri.search + uri.hash;
-            if (i === uriParts.length - 1 && uri.search !== base.search && uri.hash !== base.hash) return uri.search + uri.hash;
+            if (baseParts[i] !== uriParts[i] && i >= baseParts.length - 1) return decodeURI(uriParts.slice(i).join('/')) + uri.search + decodeURI(uri.hash);
+            if (baseParts[i] !== uriParts[i]) return '../'.repeat(baseParts.length - i - 1) + decodeURI(uriParts.slice(i).join('/')) + uri.search + decodeURI(uri.hash);
+            if (i === uriParts.length - 1 && uri.search !== base.search && uri.hash !== base.hash) return uri.search + decodeURI(uri.hash);
             if (i === uriParts.length - 1 && uri.search !== base.search) return uri.search;
-            if (i === uriParts.length - 1 && uri.hash !== base.hash) return uri.hash;
+            if (i === uriParts.length - 1 && uri.hash !== base.hash) return decodeURI(uri.hash);
         }
-        return decodeURI(targetUriReference);
+        return targetUriReference;
     },
     // custom queryString parser, returns object or array
     parseQueryString: function (queryString, asArray) {
