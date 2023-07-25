@@ -86,6 +86,8 @@ module.exports = {
         if (!Array.isArray(target)) return {};
         return Promise.resolve(target.reduce((acc, value) => this.mergeDeep(acc, parse(value)), {}));
     },
+    // test JSON problematic chars from string
+    hasJsonProblematicChars: (string) => /[\u0000-\u0007\u000B\u000E-\u001F\u007F-\u009F\u2028\u2029]/g.test(string),
     // remove JSON problematic chars from string
     removeJsonProblematicChars: (string) => string.replace(/[\u0000-\u0007\u000B\u000E-\u001F\u007F-\u009F\u2028\u2029]/g, ''),
     // escape JSON problematic chars in string
