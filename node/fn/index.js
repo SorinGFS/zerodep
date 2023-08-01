@@ -585,7 +585,9 @@ module.exports = {
     // test if globPattern is extended
     isExtendedGlob: (globPattern) => /!\(|@\(|\+\(|\*\(|\?\(/.test(globPattern),
     // extended glob to regex
-    globToRegex: (globPattern) => (this.isExtendedGlob(globPattern) ? this.simpleGlobToRegex(this.extendedToSimpleGlob(globPattern)) : this.simpleGlobToRegex(globPattern)),
+    globToRegex: function (globPattern) {
+        return this.isExtendedGlob(globPattern) ? this.simpleGlobToRegex(this.extendedToSimpleGlob(globPattern)) : this.simpleGlobToRegex(globPattern);
+    },
     // string parser
     search: (string, regex, parser) => {
         do {
