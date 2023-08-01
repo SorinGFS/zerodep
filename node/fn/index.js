@@ -554,6 +554,38 @@ module.exports = {
     },
     // escape regExp special characters in order to find them literally
     escapeRegex: (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), // $& means the whole matched string
+    // nested same type enclosure not supported. E.g, ?(foo?(bar)). Negative lookahead not working at the end of glob.
+    extendedToSimpleGlob: function (extendedGlob) {
+        return extendedGlob
+            .replace(/\?\(([^\(\))]+)\)/g, '{$1}?') // Convert ?(pattern) to {pattern}?
+            .replace(/\+\(([^\(\))]+)\)/g, '{$1}+') // Convert +(pattern) to {pattern}+
+            .replace(/\*\(([^\(\))]+)\)/g, '{$1}*') // Convert *(pattern) to {pattern}*
+            .replace(/\@\(([^\(\))]+)\)/g, '{$1}') // Convert @(pattern) to {pattern}
+            .replace(/!\(([^\(\))]+)\)/g, '{?!$1}') // Convert !(pattern) to {?!pattern}
+            .replace(/\|/g, ','); // Replace pipes with commas
+    },
+    // non extended glob to regex
+    simpleGlobToRegex: function (globPattern) {
+        return (
+            globPattern
+                .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape characters with special meaning in regex
+                .replace(/[\\\*]{4,}/g, '.*') // Unescape colapsed multiple wildcard as undefined number of chars
+                .replace(/(\\\})\\\*/g, '$1*') // Unescape wildcard when follows a closing curly bracket
+                .replace(/\\\*/g, '[^/]*') // Unescape wildcard as undefined number of chars excluding /
+                .replace(/(\\\})\\\+/g, '$1+') // Unescape + when follows a closing curly bracket
+                .replace(/(\\\})\\\?/g, '$1?') // Unescape ? when follows a closing curly bracket
+                .replace(/\\\?/g, '.') // Unescape ? as single character .
+                .replace(/\\\[/g, '[') // Unescape as group opening bracket [
+                .replace(/\\\]/g, ']') // Unescape as group closing bracket  ]
+                .replace(/\\\{/g, '(') // Unescape { as opening bracket (
+                .replace(/\\\}/g, ')') // Unescape { as closing bracket )
+                .replace(/,/g, '|') + '$' // Replace comma with pipe and add the end of regex
+        );
+    },
+    // test if globPattern is extended
+    isExtendedGlob: (globPattern) => /!\(|@\(|\+\(|\*\(|\?\(/.test(globPattern),
+    // extended glob to regex
+    globToRegex: (globPattern) => (this.isExtendedGlob(globPattern) ? this.simpleGlobToRegex(this.extendedToSimpleGlob(globPattern)) : this.simpleGlobToRegex(globPattern)),
     // string parser
     search: (string, regex, parser) => {
         do {
