@@ -554,39 +554,66 @@ module.exports = {
     },
     // escape regExp special characters in order to find them literally
     escapeRegex: (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), // $& means the whole matched string
-    // nested same type enclosure not supported. E.g, ?(foo?(bar)). Negative lookahead not working at the end of glob.
-    extendedToSimpleGlob: function (extendedGlob) {
-        return extendedGlob
-            .replace(/\?\(([^\(\))]+)\)/g, '{$1}?') // Convert ?(pattern) to {pattern}?
-            .replace(/\+\(([^\(\))]+)\)/g, '{$1}+') // Convert +(pattern) to {pattern}+
-            .replace(/\*\(([^\(\))]+)\)/g, '{$1}*') // Convert *(pattern) to {pattern}*
-            .replace(/\@\(([^\(\))]+)\)/g, '{$1}') // Convert @(pattern) to {pattern}
-            .replace(/!\(([^\(\))]+)\)/g, '{?!$1}') // Convert !(pattern) to {?!pattern}
-            .replace(/\|/g, ','); // Replace pipes with commas
-    },
-    // non extended glob to regex
-    simpleGlobToRegex: function (globPattern) {
-        return (
-            globPattern
+    // glob to regex: nested enclosure not (yet) supported. E.g, ?(foo?(bar)). Negative lookahead not working at the end of glob.
+    globToRegex: function (globPattern) {
+        let regexPattern = globPattern;
+        // extended glob
+        if (/\?\(|\+\(|\*\(|!\(|@\(/.test(globPattern)) {
+            regexPattern = regexPattern
+                .replace(/\?\(([^\(\))]+)\)/g, '{$1}?') // Convert ?(pattern) to {pattern}?
+                .replace(/\+\(([^\(\))]+)\)/g, '{$1}+') // Convert +(pattern) to {pattern}+
+                .replace(/\*\(([^\(\))]+)\)/g, '{$1}*') // Convert *(pattern) to {pattern}*
+                .replace(/!\(([^\(\))]+)\)/g, '{?!$1}') // Convert !(pattern) to {?!pattern}
+                .replace(/@\(([^\(\))]+)\)/g, '{$1}{1}') // Convert @(pattern) to {pattern}{1}
+                .replace(/\|/g, ','); // Replace pipes with commas
+        }
+        regexPattern =
+            regexPattern
                 .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape characters with special meaning in regex
                 .replace(/[\\\*]{4,}/g, '.*') // Unescape colapsed multiple wildcard as undefined number of chars
                 .replace(/(\\\})\\\*/g, '$1*') // Unescape wildcard when follows a closing curly bracket
                 .replace(/\\\*/g, '[^/]*') // Unescape wildcard as undefined number of chars excluding /
                 .replace(/(\\\})\\\+/g, '$1+') // Unescape + when follows a closing curly bracket
                 .replace(/(\\\})\\\?/g, '$1?') // Unescape ? when follows a closing curly bracket
+                .replace(/(\\\{)\\\?/g, '$1?') // Unescape ? when follows a opening curly bracket
                 .replace(/\\\?/g, '.') // Unescape ? as single character .
-                .replace(/\\\[/g, '[') // Unescape as group opening bracket [
-                .replace(/\\\]/g, ']') // Unescape as group closing bracket  ]
+                .replace(/\\\[/g, '[') // Unescape group opening bracket [
+                .replace(/\\\]/g, ']') // Unescape group closing bracket ]
+                .replace(/\\\{1/g, '{1') // Unescape {1 as {1
+                .replace(/1\\\}/g, '1}') // Unescape 1} as 1}
                 .replace(/\\\{/g, '(') // Unescape { as opening bracket (
                 .replace(/\\\}/g, ')') // Unescape { as closing bracket )
-                .replace(/,/g, '|') + '$' // Replace comma with pipe and add the end of regex
-        );
+                .replace(/,/g, '|') + '$'; // Replace comma with pipe and add the end of regex
+        return regexPattern;
     },
-    // test if globPattern is extended
-    isExtendedGlob: (globPattern) => /!\(|@\(|\+\(|\*\(|\?\(/.test(globPattern),
-    // extended glob to regex
-    globToRegex: function (globPattern) {
-        return this.isExtendedGlob(globPattern) ? this.simpleGlobToRegex(this.extendedToSimpleGlob(globPattern)) : this.simpleGlobToRegex(globPattern);
+    // regexToGlob is assuming that regexPattern was created using globToRegex
+    regexToGlob: function (regexPattern) {
+        let globPattern = regexPattern
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape characters with special meaning in regex
+            .replace(/\\\$$/g, '') // Replace the end of regex with nothing
+            .replace(/\\\|/g, ',') // Replace pipe with comma
+            .replace(/(\\\))\\\?/g, '$1?') // Unescape ? when follows a closing bracket
+            .replace(/(\\\))\\\+/g, '$1+') // Unescape + when follows a closing bracket
+            .replace(/\\\[\\\^\/\\\]\\\*/g, '*') // Unescape wildcard * when not forward slash before
+            .replace(/(\\\))\\\*/g, '$1*') // Unescape wildcard * when follows a closing bracket
+            .replace(/\\\.\\\*/g, '**') // Unescape undefined number of chars .* as double wildcard **
+            .replace(/\\\\\\\./g, '.') // Unescape . as . when escaped in regex
+            .replace(/\\\./g, '?') // Unescape single character . as ?
+            .replace(/\\\]/g, ']') // Unescape group closing bracket ]
+            .replace(/\\\[/g, '[') // Unescape group opening bracket [
+            .replace(/\\\)/g, '}') // Unescape ) as closing curly bracket }
+            .replace(/\\\(/g, '{'); // Unescape ( as opening curly bracket {
+        // extended glob
+        if (/\)\*|\)\+|\)\?|\(\?\!|\)\{1\}/.test(regexPattern)) {
+            globPattern = globPattern
+                .replace(/,/g, '|') // Replace pipes with commas
+                .replace(/\{([^\{\}]+)\}\*/g, '*($1)') // Convert {pattern}* to *(pattern)
+                .replace(/\{([^\{\}]+)\}\+/g, '+($1)') // Convert {pattern}+ to +(pattern)
+                .replace(/\{([^\{\}]+)\}\?/g, '?($1)') // Convert {pattern}? to ?(pattern)
+                .replace(/\{\\\?\!([^\{\}]+)\}/g, '!($1)') // Convert {?!pattern} to !(pattern)
+                .replace(/\{([^\{\}]+)\}\\\{1\\\}/g, '@($1)'); // Convert {pattern}{1} to @(pattern)
+        }
+        return globPattern;
     },
     // string parser
     search: (string, regex, parser) => {
