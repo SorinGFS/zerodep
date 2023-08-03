@@ -606,12 +606,12 @@ module.exports = {
         // extended glob
         if (/\)\*|\)\+|\)\?|\(\?\!|\)\{1\}/.test(regexPattern)) {
             globPattern = globPattern
-                .replace(/,/g, '|') // Replace pipes with commas
                 .replace(/\{([^\{\}]+)\}\*/g, '*($1)') // Convert {pattern}* to *(pattern)
                 .replace(/\{([^\{\}]+)\}\+/g, '+($1)') // Convert {pattern}+ to +(pattern)
                 .replace(/\{([^\{\}]+)\}\?/g, '?($1)') // Convert {pattern}? to ?(pattern)
                 .replace(/\{\\\?\!([^\{\}]+)\}/g, '!($1)') // Convert {?!pattern} to !(pattern)
-                .replace(/\{([^\{\}]+)\}\\\{1\\\}/g, '@($1)'); // Convert {pattern}{1} to @(pattern)
+                .replace(/\{([^\{\}]+)\}\\\{1\\\}/g, '@($1)') // Convert {pattern}{1} to @(pattern)
+                .replace(/,(?![^\{]*\})/g, '|'); // Replace pipes with commas
         }
         return globPattern;
     },
