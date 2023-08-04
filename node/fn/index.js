@@ -554,17 +554,19 @@ module.exports = {
     },
     // escape regExp special characters in order to find them literally
     escapeRegex: (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), // $& means the whole matched string
-    // glob to regex: nested enclosure not (yet) supported. E.g, ?(foo?(bar)). Negative lookahead not working at the end of glob.
+    // glob to regex (assuming valid globPattern)
     globToRegex: function (globPattern) {
         let regexPattern = globPattern;
         // extended glob
         if (/\?\(|\+\(|\*\(|!\(|@\(/.test(globPattern)) {
             regexPattern = regexPattern
-                .replace(/\?\(([^\(\))]+)\)/g, '{$1}?') // Convert ?(pattern) to {pattern}?
-                .replace(/\+\(([^\(\))]+)\)/g, '{$1}+') // Convert +(pattern) to {pattern}+
-                .replace(/\*\(([^\(\))]+)\)/g, '{$1}*') // Convert *(pattern) to {pattern}*
-                .replace(/!\(([^\(\))]+)\)/g, '{?!$1}') // Convert !(pattern) to {?!pattern}
-                .replace(/@\(([^\(\))]+)\)/g, '{$1}{1}') // Convert @(pattern) to {pattern}{1}
+                .replace(/\?\(([^(]+)\)/g, '{$1}?') // Convert ?(pattern) to {pattern}?
+                .replace(/\+\(([^(]+)\)/g, '{$1}+') // Convert +(pattern) to {pattern}+
+                .replace(/\*\(([^(]+)\)/g, '{$1}*') // Convert *(pattern) to {pattern}*
+                .replace(/!\(([^(]+)\)/g, '{?!$1}') // Convert !(pattern) to {?!pattern}
+                .replace(/@\(([^(]+)\)\{(\d+..\d*)\}/g, '{$1}{$2}') // Convert @(pattern) to {pattern}{\d+..\d*}
+                .replace(/@\(([^(]+)\)\{(\d+)\}/g, '{$1}{$2}') // Convert @(pattern) to {pattern}{\d+}
+                .replace(/@\(([^(]+)\)/g, '{$1}{1}') // Convert @(pattern) to {pattern}{1}
                 .replace(/\|/g, ','); // Replace pipes with commas
         }
         regexPattern =
@@ -579,11 +581,11 @@ module.exports = {
                 .replace(/\\\?/g, '.') // Unescape ? as single character .
                 .replace(/\\\[/g, '[') // Unescape group opening bracket [
                 .replace(/\\\]/g, ']') // Unescape group closing bracket ]
-                .replace(/\\\{1/g, '{1') // Unescape {1 as {1
-                .replace(/1\\\}/g, '1}') // Unescape 1} as 1}
+                .replace(/\\\{(\d+)\\\.\\\.(\d*)\\\}/g, '{$1,$2}') // Unescape {\d+..\d*} as {\d+,\d*}
+                .replace(/\\\{(\d+)\\\}/g, '{$1}') // Unescape {\d+} as {\d+}
                 .replace(/\\\{/g, '(') // Unescape { as opening bracket (
                 .replace(/\\\}/g, ')') // Unescape { as closing bracket )
-                .replace(/,/g, '|') + '$'; // Replace comma with pipe and add the end of regex
+                .replace(/,(?=[^(]*\))/g, '|') + '$'; // Replace commas with pipes inside () and add the end of regex
         return regexPattern;
     },
     // regexToGlob is assuming that regexPattern was created using globToRegex
@@ -591,7 +593,7 @@ module.exports = {
         let globPattern = regexPattern
             .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape characters with special meaning in regex
             .replace(/\\\$$/g, '') // Replace the end of regex with nothing
-            .replace(/\\\|/g, ',') // Replace pipe with comma
+            .replace(/\\\|/g, ',') // Replace pipes with commas
             .replace(/(\\\))\\\?/g, '$1?') // Unescape ? when follows a closing bracket
             .replace(/(\\\))\\\+/g, '$1+') // Unescape + when follows a closing bracket
             .replace(/\\\[\\\^\/\\\]\\\*/g, '*') // Unescape wildcard * when not forward slash before
@@ -604,14 +606,16 @@ module.exports = {
             .replace(/\\\)/g, '}') // Unescape ) as closing curly bracket }
             .replace(/\\\(/g, '{'); // Unescape ( as opening curly bracket {
         // extended glob
-        if (/\)\*|\)\+|\)\?|\(\?\!|\)\{1\}/.test(regexPattern)) {
+        if (/\)\*|\)\+|\)\?|\(\?\!|\)\{\d+\}|\)\{\d+,\d*\}/.test(regexPattern)) {
             globPattern = globPattern
-                .replace(/\{([^\{\}]+)\}\*/g, '*($1)') // Convert {pattern}* to *(pattern)
-                .replace(/\{([^\{\}]+)\}\+/g, '+($1)') // Convert {pattern}+ to +(pattern)
-                .replace(/\{([^\{\}]+)\}\?/g, '?($1)') // Convert {pattern}? to ?(pattern)
-                .replace(/\{\\\?\!([^\{\}]+)\}/g, '!($1)') // Convert {?!pattern} to !(pattern)
-                .replace(/\{([^\{\}]+)\}\\\{1\\\}/g, '@($1)') // Convert {pattern}{1} to @(pattern)
-                .replace(/,(?![^\{]*\})/g, '|'); // Replace pipes with commas
+                .replace(/\{([^{]+)\}\*/g, '*($1)') // Convert {pattern}* to *(pattern)
+                .replace(/\{([^{]+)\}\+/g, '+($1)') // Convert {pattern}+ to +(pattern)
+                .replace(/\{([^{]+)\}\?/g, '?($1)') // Convert {pattern}? to ?(pattern)
+                .replace(/\{\\\?\!([^{]+)\}/g, '!($1)') // Convert {?!pattern} to !(pattern)
+                .replace(/\{([^{]+)\}\\\{1\\\}/g, '@($1)') // Convert {pattern}{1} to @(pattern)
+                .replace(/\{([^{]+)\}\\\{(\d+)\\\}/g, '@($1){$2}') // Convert {pattern}{\d+} to @(pattern){\d+}
+                .replace(/\{([^{]+)\}\\\{(\d+),(\d*)\\\}/g, '@($1){$2..$3}') // Convert {pattern}{\d+,\d*} to @(pattern){\d+..\d*}
+                .replace(/,(?=[^(]*\))/g, '|'); // Replace commas with pipes inside ()
         }
         return globPattern;
     },
