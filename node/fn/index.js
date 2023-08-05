@@ -574,7 +574,7 @@ module.exports = {
         regexPattern =
             regexPattern
                 .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape characters with special meaning in regex
-                .replace(/[\\\*]{4,}/g, '.*') // Unescape colapsed multiple wildcard as undefined number of chars
+                .replace(/(\\\*){2,}/g, '.*') // Unescape colapsed multiple wildcard as undefined number of chars
                 .replace(/(\\\})\\\*/g, '$1*') // Unescape wildcard when follows a closing curly bracket
                 .replace(/\\\*/g, '[^/]*') // Unescape wildcard as undefined number of chars excluding /
                 .replace(/(\\\})\\\+/g, '$1+') // Unescape + when follows a closing curly bracket
