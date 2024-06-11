@@ -1,7 +1,6 @@
 'use strict';
 // remember: typeof null === 'object';
 module.exports = {
-
     // filter array unique elements
     uniqueArray: (array) => Array.isArray(array) && [...new Set(array)],
     // filter array duplicates
@@ -713,7 +712,7 @@ module.exports = {
     },
     // convert decimal unicode points to string
     decimalUnicodePointsToString: (unicodePoints) => {
-        if (!(unicodePoints instanceof Array)) return '';
+        if (!Array.isArray(unicodePoints)) return '';
         return unicodePoints.map((i) => String.fromCharCode(i)).join('');
     },
     // reverse string
@@ -746,9 +745,8 @@ module.exports = {
             }
         }
     },
-    delay: async function (milliseconds) {
-        await new Promise((resolve) => setTimeout(resolve, milliseconds));
-    },
+    // async equivalent of sleep (less overhead)
+    delay: async (milliseconds) => await new Promise((resolve) => setTimeout(resolve, milliseconds)),
     // time in milliseconds (the same from PHP)
     microtime: (getAsFloat) => {
         var s, now, multiplier;
