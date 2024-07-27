@@ -503,15 +503,16 @@ module.exports = {
         parse(...keys);
     },
     // test a - b objects equality. Comparing objects this way is slow and wrong, use with care.
-    areEqualObjects: (a, b) => {
-        let s = (o) =>
-            Object.entries(o)
+    areEqualObjects: (obj1, obj2) => {
+        if (!(obj1 instanceof Object && obj2 instanceof Object)) return false;
+        let structure = (object) =>
+            Object.entries(object)
                 .sort()
                 .map((i) => {
-                    if (i[1] instanceof Object) i[1] = s(i[1]);
+                    if (i[1] instanceof Object) i[1] = structure(i[1]);
                     return i;
                 });
-        return JSON.stringify(s(a)) === JSON.stringify(s(b));
+        return JSON.stringify(structure(obj1)) === JSON.stringify(structure(obj2));
     },
     // faster than areEqualObjects
     areEqualArrays: (arr1, arr2) => {
