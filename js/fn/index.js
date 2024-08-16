@@ -64,25 +64,14 @@ module.exports = {
     removeJsonProblematicChars: (string) => string.replace(/[\u0000-\u0007\u000B\u000E-\u001F\u007F-\u009F\u2028\u2029]/g, ''),
     // escape JSON problematic chars in string
     escapeJsonProblematicChars: (string) => string.replace(/[\u0000-\u0007\u000B\u000E-\u001F\u007F-\u009F\u2028\u2029]/g, (match) => '\\u' + match.charCodeAt(0).toString(16).padStart(4, '0')),
-    // converts object keys to jsonPointer
-    jsonPointer: (...keys) => keys.map((key) => String(key).replace(/\\(.)/g, '$1').replaceAll('~', '~0').replaceAll('/', '~1')).join('/'),
-    // converts jsonPointer to object keys
+    // converts object keys to jsonPointer (old version contained .replace(/\\(.)/g, '$1') )
+    jsonPointer: (...keys) => keys.map((key) => String(key).replaceAll('~', '~0').replaceAll('/', '~1')).join('/'),
+    // converts jsonPointer to object keys (old version contained .replace(/[\u0022\u005C\u0000-\u001F]/g, '\\$&') )
     jsonPointerKeys: (jsonPointer) => {
         return String(jsonPointer)
             .split('/')
-            .map((key) =>
-                key
-                    .replace(/[\u0022\u005C\u0000-\u001F]/g, '\\$&')
-                    .replaceAll('~1', '/')
-                    .replaceAll('~0', '~')
-            );
+            .map((key) => key.replaceAll('~1', '/').replaceAll('~0', '~'));
     },
-    // get: function (object, ...keys) {
-    //     if (typeof object === 'undefined') return false;
-    //     if (keys.length === 0) return object;
-    //     if (keys.length === 1) return object[keys[0]];
-    //     return this.get(object[keys.shift()], ...keys);
-    // },
     // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
     get: (object, ...keys) => {
