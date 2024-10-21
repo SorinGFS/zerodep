@@ -83,35 +83,39 @@ module.exports = {
             }
         }, object);
     },
-    // set deep object key (the deepest value will not be passed)
+    // set deep object key (the deepest primitive will not be overrided)
     set: (value, object, ...keys) => {
         if (!keys.length) return (object = value);
         const key = keys.pop();
         const target = keys.reduce((node, key) => {
             try {
                 if (node[key] !== undefined) return node[key];
-                if (node[key] === undefined) return (node[key] = {}) && node[key];
+                if (node[key] === undefined) return (node[key] = {}), node[key];
             } catch (e) {
                 return undefined;
             }
         }, object);
-        if (target) return ((target[key] = value) && true) || true;
+        if (target && typeof target === 'object') return (target[key] = value);
+        return false;
     },
-    // set deep object key (the deepest value will be passed)
+    // set deep object key (the deepest primitive will be overrided)
     setDeep: (value, object, ...keys) => {
         if (!keys.length) return (object = value);
         const key = keys.pop();
         const target = keys.reduce((node, key) => {
             try {
-                return node[key];
+                if (node[key] && typeof node[key] === 'object') return node[key];
+                return (node[key] = {}), node[key];
             } catch (e) {
                 return undefined;
             }
         }, object);
-        if (target) return ((target[key] = value) && true) || true;
+        if (target && typeof target === 'object') return (target[key] = value);
+        return false;
     },
+    // only returns false on frozen object properties, else true
     delete: (object, ...keys) => {
-        if (!keys.length) return;
+        if (!keys.length) return true;
         const key = keys.pop();
         const target = keys.reduce((node, key) => {
             try {
@@ -120,7 +124,8 @@ module.exports = {
                 return undefined;
             }
         }, object);
-        if (target && typeof target[key] !== undefined) return (delete target[key] && true) || true;
+        if (target && typeof target === 'object') return delete target[key];
+        return true;
     },
     // returns a static object by embeding the values of the referenced keys
     clone: (object, ...keys) => {
