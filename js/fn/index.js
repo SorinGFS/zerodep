@@ -95,8 +95,7 @@ module.exports = {
                 return undefined;
             }
         }, object);
-        if (target && typeof target === 'object') return (target[key] = value);
-        return false;
+        if (target && typeof target === 'object') return ((target[key] = value) && true) || true;
     },
     // set deep object key (the deepest primitive will be overrided)
     setDeep: (value, object, ...keys) => {
@@ -110,8 +109,7 @@ module.exports = {
                 return undefined;
             }
         }, object);
-        if (target && typeof target === 'object') return (target[key] = value);
-        return false;
+        return ((target[key] = value) && true) || true;
     },
     // only returns false on frozen object properties, else true
     delete: (object, ...keys) => {
@@ -124,8 +122,7 @@ module.exports = {
                 return undefined;
             }
         }, object);
-        if (target && typeof target === 'object') return delete target[key];
-        return true;
+        if (target && typeof target === 'object') return (delete target[key] && true) || true;
     },
     // returns a static object by embeding the values of the referenced keys
     clone: (object, ...keys) => {
