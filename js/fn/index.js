@@ -122,7 +122,8 @@ module.exports = {
                 return undefined;
             }
         }, object);
-        if (target && typeof target === 'object') return (delete target[key] && true) || true;
+        if (target) return (delete target[key] && true) || true;
+        return true;
     },
     // returns a static object by embeding the values of the referenced keys
     clone: (object, ...keys) => {
