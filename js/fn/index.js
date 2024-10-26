@@ -72,16 +72,14 @@ module.exports = {
             .split('/')
             .map((key) => key.replaceAll('~1', '/').replaceAll('~0', '~'));
     },
-    // https://gist.github.com/jeneg/9767afdcca45601ea44930ea03e0febf
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
     get: (object, ...keys) => {
-        return keys.reduce((node, key) => {
-            try {
-                return node[key];
-            } catch (e) {
-                return undefined;
-            }
-        }, object);
+        let node = object;
+        for (let key of keys) {
+            if (node == null || node[key] === undefined) return undefined;
+            node = node[key];
+        }
+        return node;
     },
     // set deep object key (the deepest primitive will not be overrided)
     set: (value, object, ...keys) => {
@@ -112,41 +110,24 @@ module.exports = {
         return ((target[key] = value) && true) || true;
     },
     // only returns false on frozen object properties, else true
-    delete: (object, ...keys) => {
+    delete: function (object, ...keys) {
         if (!keys.length) return true;
         const key = keys.pop();
-        const target = keys.reduce((node, key) => {
-            try {
-                return node[key];
-            } catch (e) {
-                return undefined;
-            }
-        }, object);
-        if (target) return (delete target[key] && true) || true;
+        const node = this.get(object, ...keys);
+        if (node) return (delete node[key] && true) || true;
         return true;
     },
     // returns a static object by embeding the values of the referenced keys
-    clone: (object, ...keys) => {
-        // this is dead slow for larger objects
+    clone: function (object, ...keys) {
         const cloneDeep = (object) => {
             if (typeof object !== 'object' || object === null) return object;
             else if (Array.isArray(object)) return object.map(cloneDeep);
             return Object.fromEntries(Object.entries(object).map(([key, value]) => [key, cloneDeep(value)]));
         };
-        if (!keys.length) return cloneDeep(object);
-        const key = keys.pop();
-        const target = keys.reduce((node, key) => {
-            try {
-                return node[key];
-            } catch (e) {
-                return undefined;
-            }
-        }, object);
-        if (target) return cloneDeep(target[key]);
+        return cloneDeep(this.get(object, ...keys));
     },
     // same as clone but object keys are sorted
-    structuredClone: (object, ...keys) => {
-        // this is dead slow for larger objects
+    structuredClone: function (object, ...keys) {
         const cloneDeep = (object) => {
             if (typeof object !== 'object' || object === null) return object;
             else if (Array.isArray(object)) return object.map(cloneDeep);
@@ -156,16 +137,7 @@ module.exports = {
                     .map(([key, value]) => [key, cloneDeep(value)])
             );
         };
-        if (!keys.length) return cloneDeep(object);
-        const key = keys.pop();
-        const target = keys.reduce((node, key) => {
-            try {
-                return node[key];
-            } catch (e) {
-                return undefined;
-            }
-        }, object);
-        if (target) return cloneDeep(target[key]);
+        return cloneDeep(this.get(object, ...keys));
     },
     // returns an array of deep keys not including shallow object keys
     deepKeys: function (object) {
