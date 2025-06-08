@@ -701,6 +701,43 @@ module.exports = {
         while (strings[0][i] && strings.every((string) => string[i] === strings[0][i])) i++;
         return strings[0].substring(0, i);
     },
+    // convert a number represented by a string into [bigint, scale]
+    toBigIntScaled: (numberString) => {
+        if (typeof numberString !== 'string') return [0n, 0]; // invalid
+        let [base, exponent = '0'] = numberString.trim().toLowerCase().split('e');
+        exponent = parseInt(exponent, 10);
+        const [integerPart, fractionalPart = ''] = base.split('.');
+        const full = (integerPart + fractionalPart).replace(/^[-+]?0+(?=\d)|\.(?=\d)|(?<=\d)0+$/g, '');
+        const sign = base.startsWith('-') ? -1n : 1n;
+        const numberScale = fractionalPart.length - exponent;
+        return [sign * BigInt(full || '0'), Math.max(0, numberScale)];
+    },
+    // accurate, fast for regular cases, slower for edge cases
+    isMultipleOf: function (number, divisor) {
+        let result = this.maybeMultipleOf(number, divisor);
+        if (result !== undefined) return result;
+        const [numberBigInt, numberScale] = this.toBigIntScaled(number.toString());
+        const [divisorBigInt, divisorScale] = this.toBigIntScaled(divisor.toString());
+        if (divisorBigInt === 0n) return false;
+        // Normalize to same scale
+        const factor = 10n ** BigInt(Math.max(numberScale, divisorScale));
+        const scaledNumber = numberBigInt * (factor / 10n ** BigInt(numberScale));
+        const scaledDivisor = divisorBigInt * (factor / 10n ** BigInt(divisorScale));
+        return scaledNumber % scaledDivisor === 0n;
+    },
+    // helper of isMultipleOf, kept separate for performance reasons
+    maybeMultipleOf: (number, divisor) => {
+        if (typeof number !== 'number' || typeof divisor !== 'number' || !isFinite(number) || !isFinite(divisor) || divisor === 0) return false;
+        // 1. Always true when the number is zero
+        if (number === 0) return true;
+        // 2. Both number and divisor are safe integers
+        if (Number.isSafeInteger(number) && Number.isSafeInteger(divisor)) return number % divisor === 0;
+        const quotient = number / divisor;
+        // 3. Quotient close to integer (epsilon tolerance)
+        if (Math.abs(quotient - Math.round(quotient)) < Number.EPSILON * Math.abs(quotient)) return true;
+        // 4. Defer to more accurate function
+        return undefined;
+    },
     // simple sleep in milliseconds (sync)
     sleep: (milliseconds) => {
         var start = new Date().getTime();
