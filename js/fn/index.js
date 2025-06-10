@@ -702,23 +702,27 @@ module.exports = {
         return strings[0].substring(0, i);
     },
     // convert a number represented by a string into [bigint, scale]
-    toBigIntScaled: (numberString) => {
-        if (typeof numberString !== 'string') return [0n, 0]; // invalid
-        let [base, exponent = '0'] = numberString.trim().toLowerCase().split('e');
-        exponent = parseInt(exponent, 10);
-        const [integerPart, fractionalPart = ''] = base.split('.');
-        const full = (integerPart + fractionalPart).replace(/^[-+]?0+(?=\d)|\.(?=\d)|(?<=\d)0+$/g, '');
+    toBigIntScaled:(numberString)=> {
+        if (typeof numberString !== 'string') return [0n, 0];
+        numberString = numberString.trim().toLowerCase();
+        let [base, exponent = '0'] = numberString.split('e');
+        exponent = parseInt(exponent);
         const sign = base.startsWith('-') ? -1n : 1n;
-        const numberScale = fractionalPart.length - exponent;
-        return [sign * BigInt(full || '0'), Math.max(0, numberScale)];
+        base = base.replace(/^[-+]/, '');
+        let [integerPart, fractionalPart = ''] = base.split('.');
+        integerPart = integerPart.replace(/^0+/, '') || '0';
+        fractionalPart = fractionalPart.replace(/0+$/, '');
+        const scale = fractionalPart.length - exponent;
+        const digits = integerPart + fractionalPart + '0'.repeat(scale > 0 ? 0 : Math.abs(scale));
+        return [sign * BigInt(digits || '0'), scale > 0 ? scale : 0];
     },
     // accurate, fast for regular cases, slower for edge cases
     isMultipleOf: function (number, divisor) {
         let result = this.maybeMultipleOf(number, divisor);
         if (result !== undefined) return result;
+        // if a number requires more significant bits that supported by IEEE754.binary64 then the result cannot be accurate even with this workaround
         const [numberBigInt, numberScale] = this.toBigIntScaled(number.toString());
         const [divisorBigInt, divisorScale] = this.toBigIntScaled(divisor.toString());
-        if (divisorBigInt === 0n) return false;
         // Normalize to same scale
         const factor = 10n ** BigInt(Math.max(numberScale, divisorScale));
         const scaledNumber = numberBigInt * (factor / 10n ** BigInt(numberScale));
@@ -732,9 +736,11 @@ module.exports = {
         if (number === 0) return true;
         // 2. Both number and divisor are safe integers
         if (Number.isSafeInteger(number) && Number.isSafeInteger(divisor)) return number % divisor === 0;
-        const quotient = number / divisor;
         // 3. Quotient close to integer (epsilon tolerance)
-        if (Math.abs(quotient - Math.round(quotient)) < Number.EPSILON * Math.abs(quotient)) return true;
+        if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Math.abs(divisor) <= Number.MAX_SAFE_INTEGER) {
+            const quotient = number / divisor;
+            if (Math.abs(quotient) <= Number.MAX_SAFE_INTEGER ) return Math.abs(quotient) - Math.round(Math.abs(quotient)) < Math.max(Number.EPSILON * Math.abs(quotient), Number.EPSILON)
+        }
         // 4. Defer to more accurate function
         return undefined;
     },
