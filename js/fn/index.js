@@ -734,12 +734,12 @@ module.exports = {
         if (typeof number !== 'number' || typeof divisor !== 'number' || !isFinite(number) || !isFinite(divisor) || divisor === 0) return false;
         // 1. Always true when the number is zero
         if (number === 0) return true;
-        // 2. Both number and divisor are safe integers
-        if (Number.isSafeInteger(number) && Number.isSafeInteger(divisor)) return number % divisor === 0;
+        // 2. Number bellow safe integer and divisor is safe integer
+        if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Number.isSafeInteger(divisor)) return number % divisor === 0;       
         // 3. Quotient close to integer (epsilon tolerance)
         if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Math.abs(divisor) <= Number.MAX_SAFE_INTEGER) {
             const quotient = number / divisor;
-            if (Math.abs(quotient) <= Number.MAX_SAFE_INTEGER ) return Math.abs(quotient) - Math.round(Math.abs(quotient)) < Math.max(Number.EPSILON * Math.abs(quotient), Number.EPSILON)
+            if (Math.abs(quotient) <= Number.MAX_SAFE_INTEGER ) return Math.abs(quotient - Math.round(quotient)) < Math.max(Number.EPSILON * Math.abs(quotient), Number.EPSILON)
         }
         // 4. Defer to more accurate function
         return undefined;
