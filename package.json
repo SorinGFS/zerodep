@@ -1,6 +1,6 @@
 {
   "name": "zerodep",
-  "version": "1.7.30",
+  "version": "1.7.31",
   "description": "Zero dependency utils for various environments.",
   "main": "index.js",
   "repository": {
