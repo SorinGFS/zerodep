@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 // loading files in the specified directory choosen by the loader
 const fn = require('../fn');
 const fs = require('../fs');

@@ -1,6 +1,6 @@
 'use strict';
 // load json files in tree
-const load = require('../load');
+const load = require('../');
 const fs = require('../../fs');
 
 const loader = (...pathResolveArgs) => {
