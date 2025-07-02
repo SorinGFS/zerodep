@@ -702,7 +702,7 @@ module.exports = {
         return strings[0].substring(0, i);
     },
     // convert a number represented by a string into [bigint, scale]
-    toBigIntScaled:(numberString)=> {
+    toBigIntScaled: (numberString) => {
         if (typeof numberString !== 'string') return [0n, 0];
         numberString = numberString.trim().toLowerCase();
         let [base, exponent = '0'] = numberString.split('e');
@@ -735,11 +735,11 @@ module.exports = {
         // 1. Always true when the number is zero
         if (number === 0) return true;
         // 2. Number bellow safe integer and divisor is safe integer
-        if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Number.isSafeInteger(divisor)) return number % divisor === 0;       
+        if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Number.isSafeInteger(divisor)) return number % divisor === 0;
         // 3. Quotient close to integer (epsilon tolerance)
         if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Math.abs(divisor) <= Number.MAX_SAFE_INTEGER) {
             const quotient = number / divisor;
-            if (Math.abs(quotient) <= Number.MAX_SAFE_INTEGER ) return Math.abs(quotient - Math.round(quotient)) < Math.max(Number.EPSILON * Math.abs(quotient), Number.EPSILON)
+            if (Math.abs(quotient) <= Number.MAX_SAFE_INTEGER) return Math.abs(quotient - Math.round(quotient)) < Math.max(Number.EPSILON * Math.abs(quotient), Number.EPSILON);
         }
         // 4. Defer to more accurate function
         return undefined;
@@ -819,5 +819,10 @@ module.exports = {
             crc = crc & 1 ? (crc >>> 1) ^ POLY : crc >>> 1;
         }
         return crc ^ 0xffffffff;
+    },
+    // almost as fast as crypto.createHash('md5').update(JSON.stringify(value)).digest('hex'), but lib free
+    crc32DuplexHash: function (value) {
+        const string = JSON.stringify(value);
+        return this.crc32(string).toString(16) + this.crc32(this.reverseString(string)).toString(16);
     },
 };
