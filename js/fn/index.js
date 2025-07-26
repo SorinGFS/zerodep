@@ -825,4 +825,106 @@ module.exports = {
         const string = JSON.stringify(value);
         return this.crc32(string).toString(16) + this.crc32(this.reverseString(string)).toString(16);
     },
+    // base16 encode
+    base16: (string) => {
+        if (typeof string !== 'string') return '';
+        let encoded = '';
+        for (let i = 0; i < string.length; i++) encoded += string.charCodeAt(i).toString(16).toUpperCase().padStart(2, '0');
+        return encoded;
+    },
+    // base16 decode
+    decodeBase16: (encoded) => {
+        if (typeof encoded !== 'string' || !/^(?:[0-9A-F]{2})+$/.test(encoded)) return '';
+        let output = '';
+        for (let i = 0; i < encoded.length; i += 2) {
+            const hexPair = encoded.slice(i, i + 2);
+            const decimalValue = parseInt(hexPair, 16);
+            output += String.fromCharCode(decimalValue);
+        }
+        return output;
+    },
+    // base32 encode
+    base32: (string) => {
+        if (typeof string !== 'string') return '';
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        const bytes = typeof window !== 'undefined' ? new TextEncoder().encode(string) : Buffer.from(string, 'utf8');
+        let bits = '';
+        let result = '';
+        for (const byte of bytes) bits += byte.toString(2).padStart(8, '0');
+        for (let i = 0; i < bits.length; i += 5) result += alphabet[parseInt(bits.slice(i, i + 5).padEnd(5, '0'), 2)];
+        while (result.length % 8 !== 0) result += '=';
+        return result;
+    },
+    // base32 decode
+    decodeBase32: (encoded) => {
+        if (typeof encoded !== 'string' || !/^[A-Z2-7]+=*$/.test(encoded) || encoded.length % 8 !== 0) return '';
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        let bits = '';
+        let bytes = [];
+        for (const char of encoded.replace(/=+$/, '')) bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
+        for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+        const byteArray = Uint8Array.from(bytes);
+        return typeof window !== 'undefined' ? new TextDecoder().decode(byteArray) : Buffer.from(byteArray).toString('utf8');
+    },
+    // base64 encode (soon this will replace btoa from node/fn)
+    base64: (string) => {
+        if (typeof string !== 'string') return '';
+        if (typeof window !== 'undefined') {
+            const bytes = new TextEncoder().encode(string);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary);
+        }
+        return Buffer.from(string, 'binary').toString('base64');
+    },
+    // base64 decode (soon this will replace atob from node/fn)
+    decodeBase64: (encoded) => {
+        if (typeof encoded !== 'string' || !/^[0-9a-zA-Z+/]+=*$/.test(encoded) || encoded.length % 4 !== 0) return '';
+        if (typeof window !== 'undefined') {
+            const binary = atob(encoded);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new TextDecoder().decode(bytes);
+        }
+        return Buffer.from(encoded, 'base64').toString('utf8');
+    },
+    // base64url encode
+    base64url: function (string) {
+        if (typeof string !== 'string') return '';
+        return this.base64(string).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
+    // base64url decode
+    decodeBase64url: function (encoded) {
+        if (typeof encoded !== 'string') return '';
+        return this.decodeBase64((encoded.replace(/-/g, '+').replace(/_/g, '/') + '===').slice(0, Math.ceil(encoded.length / 4) * 4));
+    },
+    // base64mime encode
+    base64mime: function (string) {
+        if (typeof string !== 'string') return '';
+        const result = this.base64(string);
+        return result ? result.match(/.{1,76}/g).join('\r\n') : result;
+    },
+    // base64mime decode
+    decodeBase64mime: function (encoded) {
+        if (typeof encoded !== 'string') return '';
+        return this.decodeBase64(encoded.replace('\r\n', ''));
+    },
+    // quoted-printable encode
+    quotedPrintable: (string) => {
+        if (typeof string !== 'string') return '';
+        let encoded = '';
+        for (let i = 0; i < string.length; i++) {
+            const char = string[i];
+            const charCode = char.charCodeAt(0);
+            if (charCode !== 9 && (charCode < 32 || charCode === 61 || charCode > 126)) {
+                const hex = charCode.toString(16).toUpperCase();
+                encoded += `=${hex.length < 2 ? '0' + hex : hex}`;
+            } else {
+                encoded += char;
+            }
+        }
+        return encoded ? encoded.match(/[\s\S]{1,75}/g).join('=\r\n') : encoded;
+    },
+    // quoted-printable decode
+    decodeQuotedPrintable: (encoded) => (typeof encoded !== 'string' ? '' : encoded.replace(/=([0-9A-Fa-f]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))),
 };
