@@ -925,6 +925,6 @@ module.exports = {
         }
         return encoded ? encoded.match(/[\s\S]{1,75}/g).join('=\r\n') : encoded;
     },
-    // quoted-printable decode
-    decodeQuotedPrintable: (encoded) => (typeof encoded !== 'string' ? '' : encoded.replace(/=([0-9A-Fa-f]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))),
+    // quoted-printable decode (tolerant with lines ending in \n only)
+    decodeQuotedPrintable: (encoded) => (typeof encoded !== 'string' ? '' : encoded.replace(/=\r?\n|=$/g, '').replace(/=([0-9A-F]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))),
 };
