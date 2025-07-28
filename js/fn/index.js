@@ -834,7 +834,7 @@ module.exports = {
     },
     // base16 decode
     decodeBase16: (encoded) => {
-        if (typeof string !== 'string') throw new TypeError('base16 encoded input must be a string');
+        if (typeof encoded !== 'string') throw new TypeError('base16 encoded input must be a string');
         if (!/^[0-9A-F]+$/.test(encoded)) throw new SyntaxError('invalid characters in base16 encoded input');
         if (encoded.length % 2 !== 0) throw new SyntaxError('invalid base16 encoded input length');
         let output = '';
@@ -859,7 +859,7 @@ module.exports = {
     },
     // base32 decode
     decodeBase32: (encoded) => {
-        if (typeof string !== 'string') throw new TypeError('base32 encoded input must be a string');
+        if (typeof encoded !== 'string') throw new TypeError('base32 encoded input must be a string');
         if (!/^[A-Z2-7]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base32 encoded input');
         if (encoded.length % 8 !== 0) throw new SyntaxError('invalid base32 encoded input length');
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -883,7 +883,7 @@ module.exports = {
     },
     // base64 decode (soon this will replace atob from node/fn)
     decodeBase64: (encoded) => {
-        if (typeof string !== 'string') throw new TypeError('base64 encoded input must be a string');
+        if (typeof encoded !== 'string') throw new TypeError('base64 encoded input must be a string');
         if (!/^[0-9a-zA-Z+/]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base64 encoded input');
         if (encoded.length % 4 !== 0) throw new SyntaxError('invalid base64 encoded input length');
         if (typeof window !== 'undefined') {
@@ -901,7 +901,7 @@ module.exports = {
     },
     // base64url decode
     decodeBase64url: function (encoded) {
-        if (typeof string !== 'string') throw new TypeError('base64url encoded input must be a string');
+        if (typeof encoded !== 'string') throw new TypeError('base64url encoded input must be a string');
         if (!/^[0-9a-zA-Z_-]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base64url encoded input');
         return this.decodeBase64((encoded.replace(/-/g, '+').replace(/_/g, '/') + '===').slice(0, Math.ceil(encoded.length / 4) * 4));
     },
@@ -913,7 +913,7 @@ module.exports = {
     },
     // base64mime decode
     decodeBase64mime: function (encoded) {
-        if (typeof string !== 'string') throw new TypeError('base64mime encoded input must be a string');
+        if (typeof encoded !== 'string') throw new TypeError('base64mime encoded input must be a string');
         return this.decodeBase64(encoded.replace('\r\n', ''));
     },
     // quoted-printable encode
