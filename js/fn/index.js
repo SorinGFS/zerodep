@@ -870,7 +870,7 @@ module.exports = {
         const bytes = Uint8Array.from(byteArray);
         let string = null;
         try {
-            string = new TextDecoder('utf-8', { fatal: true }).decode(byteArray);
+            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
         } catch (e) {}
         return { bytes, string };
     },
@@ -942,19 +942,24 @@ module.exports = {
     // quoted-printable decode (tolerant with lines ending in \n only)
     decodeQuotedPrintable: (encoded) => {
         if (typeof encoded !== 'string') throw new TypeError('quoted-printable encoded input must be a string');
+        if (/=([0-9a-f]{2})/.test(encoded)) throw new SyntaxError('invalid lowercase hex digits in quoted-printable');
         const byteArray = [];
-        encoded
-            .replace(/=\r?\n|=$/g, '')
-            .replace(/=([0-9A-F]{2})/g, (_, hex) => {
-                byteArray.push(parseInt(hex, 16));
-                return '';
-            })
-            .split('')
-            .forEach((c) => byteArray.push(c.charCodeAt(0)));
+        let i = 0;
+        encoded = encoded.replace(/=\r?\n|=$/g, ''); // soft line breaks and trailing =
+        while (i < encoded.length) {
+            const c = encoded[i];
+            if (c === '=' && /^[0-9A-F]{2}$/.test(encoded.slice(i + 1, i + 3))) {
+                byteArray.push(parseInt(encoded.slice(i + 1, i + 3), 16));
+                i += 3;
+            } else {
+                byteArray.push(encoded.charCodeAt(i));
+                i++;
+            }
+        }
         const bytes = Uint8Array.from(byteArray);
         let string = null;
         try {
-            string = new TextDecoder('utf-8', { fatal: true }).decode(byteArray);
+            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
         } catch (e) {}
         return { bytes, string };
     },
