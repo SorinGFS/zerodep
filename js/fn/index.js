@@ -837,13 +837,13 @@ module.exports = {
         if (typeof encoded !== 'string') throw new TypeError('base16 encoded input must be a string');
         if (!/^[0-9A-F]+$/.test(encoded)) throw new SyntaxError('invalid characters in base16 encoded input');
         if (encoded.length % 2 !== 0) throw new SyntaxError('invalid base16 encoded input length');
-        let output = '';
-        for (let i = 0; i < encoded.length; i += 2) {
-            const hexPair = encoded.slice(i, i + 2);
-            const decimalValue = parseInt(hexPair, 16);
-            output += String.fromCharCode(decimalValue);
-        }
-        return output;
+        const bytes = new Uint8Array(encoded.length / 2);
+        for (let i = 0; i < encoded.length; i += 2) bytes[i / 2] = parseInt(encoded.slice(i, i + 2), 16);
+        let string = null;
+        try {
+            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        } catch (e) {}
+        return { bytes, string };
     },
     // base32 encode
     base32: (string) => {
@@ -864,11 +864,15 @@ module.exports = {
         if (encoded.length % 8 !== 0) throw new SyntaxError('invalid base32 encoded input length');
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         let bits = '';
-        let bytes = [];
+        let byteArray = [];
         for (const char of encoded.replace(/=+$/, '')) bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
-        for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
-        const byteArray = Uint8Array.from(bytes);
-        return typeof window !== 'undefined' ? new TextDecoder().decode(byteArray) : Buffer.from(byteArray).toString('utf8');
+        for (let i = 0; i + 8 <= bits.length; i += 8) byteArray.push(parseInt(bits.slice(i, i + 8), 2));
+        const bytes = Uint8Array.from(byteArray);
+        let string = null;
+        try {
+            string = new TextDecoder('utf-8', { fatal: true }).decode(byteArray);
+        } catch (e) {}
+        return { bytes, string };
     },
     // base64 encode (soon this will replace btoa from node/fn)
     base64: (string) => {
@@ -886,13 +890,16 @@ module.exports = {
         if (typeof encoded !== 'string') throw new TypeError('base64 encoded input must be a string');
         if (!/^[0-9a-zA-Z+/]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base64 encoded input');
         if (encoded.length % 4 !== 0) throw new SyntaxError('invalid base64 encoded input length');
-        if (typeof window !== 'undefined') {
-            const binary = atob(encoded);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            return new TextDecoder().decode(bytes);
-        }
-        return Buffer.from(encoded, 'base64').toString('utf8');
+        let binary;
+        if (typeof window !== 'undefined') binary = atob(encoded);
+        else binary = Buffer.from(encoded, 'base64').toString('binary');
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        let string = null;
+        try {
+            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        } catch (e) {}
+        return { bytes, string };
     },
     // base64url encode
     base64url: function (string) {
@@ -935,6 +942,20 @@ module.exports = {
     // quoted-printable decode (tolerant with lines ending in \n only)
     decodeQuotedPrintable: (encoded) => {
         if (typeof encoded !== 'string') throw new TypeError('quoted-printable encoded input must be a string');
-        return encoded.replace(/=\r?\n|=$/g, '').replace(/=([0-9A-F]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+        const byteArray = [];
+        encoded
+            .replace(/=\r?\n|=$/g, '')
+            .replace(/=([0-9A-F]{2})/g, (_, hex) => {
+                byteArray.push(parseInt(hex, 16));
+                return '';
+            })
+            .split('')
+            .forEach((c) => byteArray.push(c.charCodeAt(0)));
+        const bytes = Uint8Array.from(byteArray);
+        let string = null;
+        try {
+            string = new TextDecoder('utf-8', { fatal: true }).decode(byteArray);
+        } catch (e) {}
+        return { bytes, string };
     },
 };
