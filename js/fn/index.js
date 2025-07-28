@@ -827,14 +827,16 @@ module.exports = {
     },
     // base16 encode
     base16: (string) => {
-        if (typeof string !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('base16 encoding input must be a string');
         let encoded = '';
         for (let i = 0; i < string.length; i++) encoded += string.charCodeAt(i).toString(16).toUpperCase().padStart(2, '0');
         return encoded;
     },
     // base16 decode
     decodeBase16: (encoded) => {
-        if (typeof encoded !== 'string' || !/^(?:[0-9A-F]{2})+$/.test(encoded)) return '';
+        if (typeof string !== 'string') throw new TypeError('base16 encoded input must be a string');
+        if (!/^[0-9A-F]+$/.test(encoded)) throw new SyntaxError('invalid characters in base16 encoded input');
+        if (encoded.length % 2 !== 0) throw new SyntaxError('invalid base16 encoded input length');
         let output = '';
         for (let i = 0; i < encoded.length; i += 2) {
             const hexPair = encoded.slice(i, i + 2);
@@ -845,7 +847,7 @@ module.exports = {
     },
     // base32 encode
     base32: (string) => {
-        if (typeof string !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('base32 encoding input must be a string');
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         const bytes = typeof window !== 'undefined' ? new TextEncoder().encode(string) : Buffer.from(string, 'utf8');
         let bits = '';
@@ -857,7 +859,9 @@ module.exports = {
     },
     // base32 decode
     decodeBase32: (encoded) => {
-        if (typeof encoded !== 'string' || !/^[A-Z2-7]+=*$/.test(encoded) || encoded.length % 8 !== 0) return '';
+        if (typeof string !== 'string') throw new TypeError('base32 encoded input must be a string');
+        if (!/^[A-Z2-7]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base32 encoded input');
+        if (encoded.length % 8 !== 0) throw new SyntaxError('invalid base32 encoded input length');
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         let bits = '';
         let bytes = [];
@@ -868,7 +872,7 @@ module.exports = {
     },
     // base64 encode (soon this will replace btoa from node/fn)
     base64: (string) => {
-        if (typeof string !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('base64 encoding input must be a string');
         if (typeof window !== 'undefined') {
             const bytes = new TextEncoder().encode(string);
             let binary = '';
@@ -879,7 +883,9 @@ module.exports = {
     },
     // base64 decode (soon this will replace atob from node/fn)
     decodeBase64: (encoded) => {
-        if (typeof encoded !== 'string' || !/^[0-9a-zA-Z+/]+=*$/.test(encoded) || encoded.length % 4 !== 0) return '';
+        if (typeof string !== 'string') throw new TypeError('base64 encoded input must be a string');
+        if (!/^[0-9a-zA-Z+/]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base64 encoded input');
+        if (encoded.length % 4 !== 0) throw new SyntaxError('invalid base64 encoded input length');
         if (typeof window !== 'undefined') {
             const binary = atob(encoded);
             const bytes = new Uint8Array(binary.length);
@@ -890,28 +896,29 @@ module.exports = {
     },
     // base64url encode
     base64url: function (string) {
-        if (typeof string !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('base64url encoding input must be a string');
         return this.base64(string).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     },
     // base64url decode
     decodeBase64url: function (encoded) {
-        if (typeof encoded !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('base64url encoded input must be a string');
+        if (!/^[0-9a-zA-Z_-]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base64url encoded input');
         return this.decodeBase64((encoded.replace(/-/g, '+').replace(/_/g, '/') + '===').slice(0, Math.ceil(encoded.length / 4) * 4));
     },
     // base64mime encode
     base64mime: function (string) {
-        if (typeof string !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('base64mime encoding input must be a string');
         const result = this.base64(string);
         return result ? result.match(/.{1,76}/g).join('\r\n') : result;
     },
     // base64mime decode
     decodeBase64mime: function (encoded) {
-        if (typeof encoded !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('base64mime encoded input must be a string');
         return this.decodeBase64(encoded.replace('\r\n', ''));
     },
     // quoted-printable encode
     quotedPrintable: (string) => {
-        if (typeof string !== 'string') return '';
+        if (typeof string !== 'string') throw new TypeError('quoted-printable encoding input must be a string');
         let encoded = '';
         for (let i = 0; i < string.length; i++) {
             const char = string[i];
@@ -926,5 +933,8 @@ module.exports = {
         return encoded ? encoded.match(/[\s\S]{1,75}/g).join('=\r\n') : encoded;
     },
     // quoted-printable decode (tolerant with lines ending in \n only)
-    decodeQuotedPrintable: (encoded) => (typeof encoded !== 'string' ? '' : encoded.replace(/=\r?\n|=$/g, '').replace(/=([0-9A-F]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))),
+    decodeQuotedPrintable: (encoded) => {
+        if (typeof encoded !== 'string') throw new TypeError('quoted-printable encoded input must be a string');
+        return encoded.replace(/=\r?\n|=$/g, '').replace(/=([0-9A-F]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+    },
 };
