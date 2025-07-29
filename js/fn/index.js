@@ -921,7 +921,7 @@ module.exports = {
     // base64mime decode
     decodeBase64mime: function (encoded) {
         if (typeof encoded !== 'string') throw new TypeError('base64mime encoded input must be a string');
-        return this.decodeBase64(encoded.replace('\r\n', ''));
+        return this.decodeBase64(encoded.replace(/\r\n/g, ''));
     },
     // quoted-printable encode
     quotedPrintable: (string) => {
