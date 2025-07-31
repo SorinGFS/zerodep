@@ -835,7 +835,7 @@ module.exports = {
     // base16 decode
     decodeBase16: (encoded) => {
         if (typeof encoded !== 'string') throw new TypeError('base16 encoded input must be a string');
-        if (!/^[0-9A-F]+$/.test(encoded)) throw new SyntaxError('invalid characters in base16 encoded input');
+        if (!/^[0-9A-F]*$/.test(encoded)) throw new SyntaxError('invalid characters in base16 encoded input');
         if (encoded.length % 2 !== 0) throw new SyntaxError('invalid base16 encoded input length');
         const bytes = new Uint8Array(encoded.length / 2);
         for (let i = 0; i < encoded.length; i += 2) bytes[i / 2] = parseInt(encoded.slice(i, i + 2), 16);
@@ -860,7 +860,7 @@ module.exports = {
     // base32 decode
     decodeBase32: (encoded) => {
         if (typeof encoded !== 'string') throw new TypeError('base32 encoded input must be a string');
-        if (!/^[A-Z2-7]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base32 encoded input');
+        if (!/^[A-Z2-7]*={0,6}$/.test(encoded)) throw new SyntaxError('invalid characters in base32 encoded input');
         if (encoded.length % 8 !== 0) throw new SyntaxError('invalid base32 encoded input length');
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         let bits = '';
@@ -888,7 +888,7 @@ module.exports = {
     // base64 decode (soon this will replace atob from node/fn)
     decodeBase64: (encoded) => {
         if (typeof encoded !== 'string') throw new TypeError('base64 encoded input must be a string');
-        if (!/^[0-9a-zA-Z+/]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base64 encoded input');
+        if (!/^[0-9a-zA-Z+/]*={0,2}$/.test(encoded)) throw new SyntaxError('invalid characters in base64 encoded input');
         if (encoded.length % 4 !== 0) throw new SyntaxError('invalid base64 encoded input length');
         let binary;
         if (typeof window !== 'undefined') binary = atob(encoded);
@@ -909,7 +909,7 @@ module.exports = {
     // base64url decode
     decodeBase64url: function (encoded) {
         if (typeof encoded !== 'string') throw new TypeError('base64url encoded input must be a string');
-        if (!/^[0-9a-zA-Z_-]+=*$/.test(encoded)) throw new SyntaxError('invalid characters in base64url encoded input');
+        if (!/^[0-9a-zA-Z_-]*={0,2}$/.test(encoded)) throw new SyntaxError('invalid characters in base64url encoded input');
         return this.decodeBase64((encoded.replace(/-/g, '+').replace(/_/g, '/') + '===').slice(0, Math.ceil(encoded.length / 4) * 4));
     },
     // base64mime encode
