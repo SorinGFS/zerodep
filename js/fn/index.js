@@ -839,11 +839,14 @@ module.exports = {
         if (encoded.length % 2 !== 0) throw new SyntaxError('invalid base16 encoded input length');
         const bytes = new Uint8Array(encoded.length / 2);
         for (let i = 0; i < encoded.length; i += 2) bytes[i / 2] = parseInt(encoded.slice(i, i + 2), 16);
-        let string = null;
-        try {
-            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-        } catch (e) {}
-        return { bytes, string };
+        bytes.toString = function () {
+            let string = null;
+            try {
+                string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch (e) {}
+            return string;
+        };
+        return bytes;
     },
     // base32 encode
     base32: (string) => {
@@ -868,11 +871,14 @@ module.exports = {
         for (const char of encoded.replace(/=+$/, '')) bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
         for (let i = 0; i + 8 <= bits.length; i += 8) byteArray.push(parseInt(bits.slice(i, i + 8), 2));
         const bytes = Uint8Array.from(byteArray);
-        let string = null;
-        try {
-            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-        } catch (e) {}
-        return { bytes, string };
+        bytes.toString = function () {
+            let string = null;
+            try {
+                string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch (e) {}
+            return string;
+        };
+        return bytes;
     },
     // base64 encode (soon this will replace btoa from node/fn)
     base64: (string) => {
@@ -895,11 +901,14 @@ module.exports = {
         else binary = Buffer.from(encoded, 'base64').toString('binary');
         const bytes = new Uint8Array(binary.length);
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        let string = null;
-        try {
-            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-        } catch (e) {}
-        return { bytes, string };
+        bytes.toString = function () {
+            let string = null;
+            try {
+                string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch (e) {}
+            return string;
+        };
+        return bytes;
     },
     // base64url encode
     base64url: function (string) {
@@ -910,8 +919,8 @@ module.exports = {
     decodeBase64url: function (encoded) {
         if (typeof encoded !== 'string') throw new TypeError('base64url encoded input must be a string');
         if (!/^[0-9a-zA-Z_-]*={0,2}$/.test(encoded)) throw new SyntaxError('invalid characters in base64url encoded input');
-        if (encoded.replace(/=*$/,'').length % 4 === 1) throw new SyntaxError('invalid base64url encoded input length');
-        return this.decodeBase64(encoded.replace(/-/g, '+').replace(/_/g, '/').replace(/=*$/,'') + '=='.slice(0, (4 - encoded.replace(/=*$/,'').length % 4) % 4));
+        if (encoded.replace(/=*$/, '').length % 4 === 1) throw new SyntaxError('invalid base64url encoded input length');
+        return this.decodeBase64(encoded.replace(/-/g, '+').replace(/_/g, '/').replace(/=*$/, '') + '=='.slice(0, (4 - (encoded.replace(/=*$/, '').length % 4)) % 4));
     },
     // base64mime encode
     base64mime: function (string) {
@@ -958,10 +967,13 @@ module.exports = {
             }
         }
         const bytes = Uint8Array.from(byteArray);
-        let string = null;
-        try {
-            string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-        } catch (e) {}
-        return { bytes, string };
+        bytes.toString = function () {
+            let string = null;
+            try {
+                string = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch (e) {}
+            return string;
+        };
+        return bytes;
     },
 };
