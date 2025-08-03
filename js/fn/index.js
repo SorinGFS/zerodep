@@ -910,7 +910,8 @@ module.exports = {
     decodeBase64url: function (encoded) {
         if (typeof encoded !== 'string') throw new TypeError('base64url encoded input must be a string');
         if (!/^[0-9a-zA-Z_-]*={0,2}$/.test(encoded)) throw new SyntaxError('invalid characters in base64url encoded input');
-        return this.decodeBase64((encoded.replace(/-/g, '+').replace(/_/g, '/') + '===').slice(0, Math.ceil(encoded.length / 4) * 4));
+        if (encoded.replace(/=*$/,'').length % 4 === 1) throw new SyntaxError('invalid base64url encoded input length');
+        return this.decodeBase64(encoded.replace(/-/g, '+').replace(/_/g, '/').replace(/=*$/,'') + '=='.slice(0, (4 - encoded.replace(/=*$/,'').length % 4) % 4));
     },
     // base64mime encode
     base64mime: function (string) {
