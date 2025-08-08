@@ -73,14 +73,32 @@ module.exports = {
             .map((key) => key.replaceAll('~1', '/').replaceAll('~0', '~'));
     },
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
-    get: (object, ...keys) => {
-        let node = object;
-        for (let key of keys) {
-            if (node == null || node[key] === undefined) return undefined;
-            node = node[key];
+    /** 
+    *
+    * @function get
+    * @param {any} object - The root object from which to retrieve the value.
+    * @param {...PropertyKey} keys - The sequence of keys to follow in the object.
+    * @returns {any | undefined} - The value found at the nested path, or `undefined` if any key is missing.
+    *
+    */
+    get: function (/* object, ...keys */) {
+        let node = arguments[0];
+        for (let i = 1; i < arguments.length; ++i) {
+            if (node == null) return undefined;
+            node = node[arguments[i]];
+            if (node === undefined) return undefined;
         }
         return node;
     },
+    // get: (object, ...keys) => {
+    //     let node = object;
+    //     for (let key of keys) {
+    //         if (node == null) return undefined;
+    //         node = node[key];
+    //         if (node === undefined) return undefined;
+    //     }
+    //     return node;
+    // },
     // set deep object key (the deepest primitive will not be overrided)
     set: (value, object, ...keys) => {
         if (!keys.length) return (object = value);
