@@ -691,7 +691,7 @@ module.exports = {
     // convert string to decimal unicode points
     stringToDecimalUnicodePoints: (string) => {
         if (typeof string !== 'string') return [];
-        return string.split('').map((char) => char.charCodeAt(0));
+        return Array.from(string).map((char) => char.charCodeAt(0));
     },
     // convert decimal unicode points to string
     decimalUnicodePointsToString: (unicodePoints) => {
@@ -699,9 +699,9 @@ module.exports = {
         return unicodePoints.map((i) => String.fromCharCode(i)).join('');
     },
     // reverse string
-    reverseString: (string) => string.split('').reverse().join(''),
+    reverseString: (string) => Array.from(string).reverse().join(''),
     // Capitalize
-    capitalizeFirstLetter: (string) => string.charAt(0).toUpperCase() + string.slice(1),
+    capitalizeFirstLetter: (string) => String.fromCodePoint(string.codePointAt(0)).toUpperCase() + Array.from(string).slice(1).join(''),
     // camelCase strings
     camelCase: function (...strings) {
         let result = strings[0].toLowerCase();
