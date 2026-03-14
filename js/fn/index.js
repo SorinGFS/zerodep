@@ -7,7 +7,9 @@ module.exports = {
     arrayDuplicates: (array) => Array.isArray(array) && array.filter((item, index) => index !== array.indexOf(item)),
     // test if string is numeric
     isNumeric: (string) => !isNaN(parseFloat(string)) && isFinite(string),
-    // test if type is object but not array
+    // test if plain object
+    isPlainObject: (object) => object && typeof object === 'object' && (Object.getPrototypeOf(object) === Object.prototype || Object.getPrototypeOf(object) === null),
+    // test if type is object but not array (shall be removed soon)
     isObjectNotArray: (object) => object && typeof object === 'object' && !Array.isArray(object),
     // test if array and has no object items
     isSimpleArray: (array) => Array.isArray(array) && !array.filter((item) => typeof item === 'object').length,
@@ -73,14 +75,14 @@ module.exports = {
             .map((key) => key.replaceAll('~1', '/').replaceAll('~0', '~'));
     },
     // split the object reference by corresponding delimiter and pass the keys array using spread operator
-    /** 
-    *
-    * @function get
-    * @param {any} object - The root object from which to retrieve the value.
-    * @param {...PropertyKey} keys - The sequence of keys to follow in the object.
-    * @returns {any | undefined} - The value found at the nested path, or `undefined` if any key is missing.
-    *
-    */
+    /**
+     *
+     * @function get
+     * @param {any} object - The root object from which to retrieve the value.
+     * @param {...PropertyKey} keys - The sequence of keys to follow in the object.
+     * @returns {any | undefined} - The value found at the nested path, or `undefined` if any key is missing.
+     *
+     */
     get: function (/* object, ...keys */) {
         let node = arguments[0];
         for (let i = 1; i < arguments.length; ++i) {
@@ -106,7 +108,7 @@ module.exports = {
         const target = keys.reduce((node, key) => {
             try {
                 if (node[key] !== undefined) return node[key];
-                if (node[key] === undefined) return (node[key] = {}), node[key];
+                if (node[key] === undefined) return ((node[key] = {}), node[key]);
             } catch (e) {
                 return undefined;
             }
@@ -120,7 +122,7 @@ module.exports = {
         const target = keys.reduce((node, key) => {
             try {
                 if (node[key] && typeof node[key] === 'object') return node[key];
-                return (node[key] = {}), node[key];
+                return ((node[key] = {}), node[key]);
             } catch (e) {
                 return undefined;
             }
@@ -152,7 +154,7 @@ module.exports = {
             return Object.fromEntries(
                 Object.entries(object)
                     .sort()
-                    .map(([key, value]) => [key, cloneDeep(value)])
+                    .map(([key, value]) => [key, cloneDeep(value)]),
             );
         };
         return cloneDeep(this.get(object, ...keys));
@@ -171,15 +173,14 @@ module.exports = {
         });
         return array.filter((n) => n);
     },
-    // https://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically
     // returns merged objects, array keys are not merged instead the last array wins
     mergeDeep: function (target, ...sources) {
         if (!sources.length) return target;
         const source = sources.shift();
-        if (this.isObjectNotArray(target) && this.isObjectNotArray(source)) {
+        if (this.isPlainObject(target) && this.isPlainObject(source)) {
             for (const key in source) {
-                if (this.isObjectNotArray(source[key]) && !(source[key] instanceof RegExp)) {
-                    if (!target[key]) Object.assign(target, { [key]: {} });
+                if (this.isPlainObject(source[key])) {
+                    if (!this.isPlainObject(target[key])) Object.assign(target, { [key]: {} });
                     this.mergeDeep(target[key], source[key]);
                 } else {
                     Object.assign(target, { [key]: source[key] });
@@ -798,11 +799,11 @@ module.exports = {
             var r = Math.random() * 16; //random number between 0 and 16
             if (d > 0) {
                 //Use timestamp until depleted
-                r = (d + r) % 16 | 0;
+                r = ((d + r) % 16) | 0;
                 d = Math.floor(d / 16);
             } else {
                 //Use microseconds since page-load if supported
-                r = (d2 + r) % 16 | 0;
+                r = ((d2 + r) % 16) | 0;
                 d2 = Math.floor(d2 / 16);
             }
             return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
