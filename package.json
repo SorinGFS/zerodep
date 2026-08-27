@@ -3,6 +3,9 @@
   "version": "1.10.10",
   "description": "Zero dependency utils for various environments.",
   "main": "index.js",
+  "scripts": {
+    "check:docs": "node scripts/check-docs.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SorinGFS/zerodep.git"
