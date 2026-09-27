@@ -1,5 +1,5 @@
 'use strict';
-// remember: typeof null === 'object';
+// Provide environment-neutral utility functions shared by browser and Node entry points.
 module.exports = {
     // filter array unique elements
     uniqueArray: (array) => Array.isArray(array) && [...new Set(array)],
@@ -742,32 +742,26 @@ module.exports = {
         const digits = integerPart + fractionalPart + '0'.repeat(scale > 0 ? 0 : Math.abs(scale));
         return [sign * BigInt(digits || '0'), scale > 0 ? scale : 0];
     },
-    // accurate, fast for regular cases, slower for edge cases
+    // Test exact divisibility of finite Numbers using their canonical decimal spellings.
     isMultipleOf: function (number, divisor) {
-        let result = this.maybeMultipleOf(number, divisor);
+        const result = this.maybeMultipleOf(number, divisor);
         if (result !== undefined) return result;
-        // if a number requires more significant bits that supported by IEEE754.binary64 then the result cannot be accurate even with this workaround
+        // Align both decimal coefficients before applying arbitrary-precision integer remainder.
         const [numberBigInt, numberScale] = this.toBigIntScaled(number.toString());
         const [divisorBigInt, divisorScale] = this.toBigIntScaled(divisor.toString());
-        // Normalize to same scale
         const factor = 10n ** BigInt(Math.max(numberScale, divisorScale));
         const scaledNumber = numberBigInt * (factor / 10n ** BigInt(numberScale));
         const scaledDivisor = divisorBigInt * (factor / 10n ** BigInt(divisorScale));
         return scaledNumber % scaledDivisor === 0n;
     },
-    // helper of isMultipleOf, kept separate for performance reasons
+    // Resolve only provably exact shortcuts before isMultipleOf performs scaled decimal arithmetic.
     maybeMultipleOf: (number, divisor) => {
-        if (typeof number !== 'number' || typeof divisor !== 'number' || !isFinite(number) || !isFinite(divisor) || divisor === 0) return false;
-        // 1. Always true when the number is zero
+        if (typeof number !== 'number' || typeof divisor !== 'number' || !Number.isFinite(number) || !Number.isFinite(divisor) || divisor === 0) return false;
+        // Zero is an exact multiple of every finite nonzero divisor.
         if (number === 0) return true;
-        // 2. Number bellow safe integer and divisor is safe integer
-        if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Number.isSafeInteger(divisor)) return number % divisor === 0;
-        // 3. Quotient close to integer (epsilon tolerance)
-        if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Math.abs(divisor) <= Number.MAX_SAFE_INTEGER) {
-            const quotient = number / divisor;
-            if (Math.abs(quotient) <= Number.MAX_SAFE_INTEGER) return Math.abs(quotient - Math.round(quotient)) < Math.max(Number.EPSILON * Math.abs(quotient), Number.EPSILON);
-        }
-        // 4. Defer to more accurate function
+        // Decide safe-range integer-divisor relationships without decimal scaling or tolerance.
+        if (Math.abs(number) <= Number.MAX_SAFE_INTEGER && Number.isSafeInteger(divisor)) return Number.isSafeInteger(number) && number % divisor === 0;
+        // Route every uncertain decimal relationship to arbitrary-precision scaled arithmetic.
         return undefined;
     },
     // simple sleep in milliseconds (sync)

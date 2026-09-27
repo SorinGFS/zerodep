@@ -4,7 +4,10 @@
   "description": "Zero dependency utils for various environments.",
   "main": "index.js",
   "scripts": {
-    "check:docs": "node scripts/check-docs.js"
+    "test": "node ./#/public/tests",
+    "benchmark": "node ./#/public/benchmarks",
+    "check:docs": "node scripts/check-docs.js",
+    "check": "npm run check:docs && npm test && node ./#/public/benchmarks --quick"
   },
   "repository": {
     "type": "git",

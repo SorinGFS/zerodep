@@ -1,6 +1,6 @@
 # Known defects and operational risks
 
-This inventory records defects and material limitations visible in the implementation reviewed for this documentation. The project has no test suite, so entries based only on source inspection are identified as such. Direct runtime checks were limited to the package-root import and `treeViewArray` failures.
+This inventory records defects and material limitations visible in the implementation reviewed for this documentation. Public tests now directly verify `isMultipleOf`; entries based only on source inspection are identified as such. Earlier direct runtime checks also confirmed the package-root import and `treeViewArray` failures.
 
 ## Packaging and API defects
 
@@ -143,7 +143,7 @@ Before declaring compatibility or API stability, the highest-value revision work
 
 1. define or remove the root entry point;
 2. establish supported public entry points and status labels;
-3. add behavioral tests for every documented family;
+3. extend behavioral tests from the precision-sensitive numeric foundation to every documented family;
 4. fix command/path boundaries and destructive filesystem behavior;
 5. normalize error, absence, mutation, and async contracts;
 6. correct environment-dependent encodings and confirmed browser/common defects;

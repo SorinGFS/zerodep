@@ -2,7 +2,7 @@
 
 `zerodep` is a CommonJS collection of dependency-free utilities for shared JavaScript, browser, and Node.js environments. The package includes data and encoding functions, DOM helpers, filesystem operations, recursive loaders, an action dispatcher, and a command executor.
 
-The documentation describes the implementation shipped by the selected package release. The project does not yet declare supported Node.js or browser versions, and it has no test suite. Treat behavior identified as defective or unverified accordingly.
+The documentation describes the implementation shipped by the selected package release. The project does not yet declare supported Node.js or browser versions. Public behavioral tests and benchmarks cover precision-sensitive numeric utilities; behavior identified only by source inspection remains unverified.
 
 ## Install
 
@@ -65,22 +65,28 @@ The references cover every current export. They describe observed source behavio
 
 Several modules can execute commands, load code, download remote content, mutate the process working directory, overwrite or recursively remove files, and create symbolic links. Validate all paths, URLs, module trees, and command arguments before invoking them. Do not pass untrusted input to `node/action`, `node/exec`, recursive loaders, or mutating filesystem helpers.
 
-## Tests and compatibility
+## Tests, benchmarks, and compatibility
 
-No tests or test scripts are currently tracked. The documented results were derived from source inspection, limited export enumeration, and direct confirmation of the missing root entry point and `treeViewArray` failure.
+Run the public behavioral suite and benchmarks with:
 
-Supported Node.js releases and browser baselines are intentionally unspecified pending a project revision. The implementation uses features including CommonJS, `BigInt`, `URL`, `TextEncoder`, `TextDecoder`, `fetch`, `replaceAll`, DOM APIs, and Node.js built-ins; availability depends on the selected entry point and runtime.
+```sh
+npm test
+npm run benchmark
+```
 
-Validate documentation coverage with:
+Run documentation coverage, tests, and the reduced benchmark smoke workload together with:
+
+```sh
+npm run check
+```
+
+The public suite currently concentrates on exact `isMultipleOf` behavior across integer, decimal, exponent, subnormal, extreme, invalid, and former epsilon-tolerance cases. The benchmark suite records package-load time and representative integer and arbitrary-precision decimal paths. These suites use the same materialized public-data layout as CI.
+
+Supported Node.js releases and browser baselines are intentionally unspecified pending a broader project revision. The current workflow exercises Node.js 24 and 26 on Linux, Windows, and macOS; this matrix is verification coverage rather than a complete support declaration. The implementation uses features including CommonJS, `BigInt`, `URL`, `TextEncoder`, `TextDecoder`, `fetch`, `replaceAll`, DOM APIs, and Node.js built-ins; availability depends on the selected entry point and runtime.
+
+Documentation coverage remains independently available through:
 
 ```sh
 npm run check:docs
 ```
 
-## Versioning
-
-API stability and deprecation policy are not yet defined. The `-E` installation option records the resolved release as an exact dependency; review source and release changes before upgrading.
-
-## License
-
-[MIT](LICENSE)

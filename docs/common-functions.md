@@ -97,8 +97,8 @@ The replace, assign, and parse families do not detect circular references. Their
 | Export | Observed behavior |
 | --- | --- |
 | `toBigIntScaled(numberString)` | Converts a decimal/scientific-notation string into `[BigInt, nonnegativeScale]`. Invalid exponent or digit syntax can throw. |
-| `isMultipleOf(number, divisor)` | **Method-bound.** Uses `maybeMultipleOf`, then decimal-string/BigInt scaling for difficult finite-number cases. Accuracy remains limited by the original IEEE-754 values and their string conversion. |
-| `maybeMultipleOf(number, divisor)` | Returns `false` for invalid finite-number inputs or zero divisors, a boolean for supported fast paths, and `undefined` when `isMultipleOf` should use its fallback. |
+| `isMultipleOf(number, divisor)` | **Method-bound.** Tests exact divisibility of finite `Number` values as represented by their canonical decimal `toString()` spellings. It uses provably exact shortcuts and otherwise aligns decimal coefficients for a `BigInt` remainder. Precision already lost before invocation cannot be reconstructed. |
+| `maybeMultipleOf(number, divisor)` | Returns `false` for invalid finite-number inputs or zero divisors, handles zero and safe-range integer-divisor relationships exactly, and returns `undefined` whenever `isMultipleOf` must use scaled decimal arithmetic. It applies no epsilon tolerance. |
 | `sleep(milliseconds)` | Busy-waits but stops after at most 10,000,000 iterations, so it may return before the requested duration and blocks the event loop while running. |
 | `delay(milliseconds)` | Returns a promise resolved by `setTimeout`. |
 | `microtime(getAsFloat)` | Returns seconds as a number when requested, otherwise a PHP-like `"fraction seconds"` string. Its clock origin and fractional multiplier differ between `performance.now` and `Date.now`. |
