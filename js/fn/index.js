@@ -153,14 +153,14 @@ module.exports = {
         };
         return cloneDeep(this.get(object, ...keys));
     },
-    // same as clone but object keys are sorted
+    // Clone recursively with object keys ordered independently of their values.
     structuredClone: function (object, ...keys) {
         const cloneDeep = (object) => {
             if (typeof object !== 'object' || object === null) return object;
             else if (Array.isArray(object)) return object.map(cloneDeep);
             return Object.fromEntries(
                 Object.entries(object)
-                    .sort()
+                    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
                     .map(([key, value]) => [key, cloneDeep(value)]),
             );
         };
