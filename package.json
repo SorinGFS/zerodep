@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node ./#/public/tests",
-    "benchmark": "node ./#/public/benchmarks",
-    "check:docs": "node scripts/check-docs.js",
-    "check": "npm run check:docs && npm test && node ./#/public/benchmarks --quick"
+    "benchmark": "node ./#/public/benchmarks"
   },
   "repository": {
     "type": "git",
