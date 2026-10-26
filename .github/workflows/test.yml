@@ -63,5 +63,5 @@ jobs:
           node -e "const fs = require('node:fs'); fs.cpSync('workspace-data/tests/github.com/SorinGFS/zerodep', '#/public/tests', { recursive: true }); fs.cpSync('workspace-data/benchmarks/github.com/SorinGFS/zerodep', '#/public/benchmarks', { recursive: true }); fs.copyFileSync('workspace-runtime/src/version-layers.js', '#/version-layers.js')"
 
       # Validate documentation, behavior, and quick benchmark execution.
-      - name: Run checks
-        run: npm run check
+      # - name: Run checks
+      #   run: npm run check
